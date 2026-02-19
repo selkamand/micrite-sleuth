@@ -101,3 +101,8 @@ ENV FQ_VERSION=0.12.0
 RUN wget "https://github.com/stjude-rust-labs/fq/releases/download/v${FQ_VERSION}/fq-${FQ_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
   && tar xzf "fq-${FQ_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
   && cp fq-${FQ_VERSION}-x86_64-unknown-linux-gnu/fq /usr/local/bin
+
+# Install mosdepth
+ENV MOSDEPTH_VERSION=0.3.12
+RUN wget -O /usr/local/bin/mosdepth "https://github.com/brentp/mosdepth/releases/download/v${MOSDEPTH_VERSION}/mosdepth" \
+  && chmod +x /usr/local/bin/mosdepth
