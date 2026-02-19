@@ -1,16 +1,25 @@
 params {
 
-    sample: String
+    // sample identifier
+    sampleid: String
 
-    kraken: Path
     //Kraken result file (stdout)
-    kreport: Path
+    kraken: Path
+
     // Kraken Report (used to identify child taxids)
+    kreport: Path
+
+    // Path to fastq reads classified
     r1: Path
+
     // Path to fastq reads classified
     r2: Path
-    // Path to fastq reads classified
+
+    // Taxid to extract (will include children)
     taxid: Integer
+
+    // Size of sleuthing
+    outdir: Path = "micritesleuth"
 }
 
 process EXTRACT_READS_BY_TAXIDS {
@@ -18,7 +27,7 @@ process EXTRACT_READS_BY_TAXIDS {
     tuple val(sampleid), val(taxid), path(kraken), path(kreport), path(r1), path(r2)
 
     output:
-    tuple path("${sampleid}.${taxid}.R1.fq"), path("${sampleid}.${taxid}.R2.fq")
+    tuple val(sampleid), path("${sampleid}.${taxid}.R1.fq"), path("${sampleid}.${taxid}.R2.fq")
 
     script:
     """
@@ -39,16 +48,17 @@ workflow {
     def r2 = file(params.r2)
     def kraken = file(params.kraken)
     def kreport = file(params.kreport)
+    def sampleid = params.sampleid
 
-    extracted_reads = EXTRACT_READS_BY_TAXIDS(params.sample, params.taxid, kraken, kreport, r1, r2)
+    reads_from_taxid_ch = EXTRACT_READS_BY_TAXIDS(channel.of(tuple(sampleid, params.taxid, kraken, kreport, r1, r2)))
 
     publish:
-    extracted_reads = extracted_reads.out
+    extracted_reads = EXTRACT_READS_BY_TAXIDS.out
 }
 
 output {
     extracted_reads {
-        path ''
+        path "${params.outdir}/${params.sampleid}/"
         mode 'copy'
     }
 }

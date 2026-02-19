@@ -28,8 +28,6 @@ Aligns reads to target reference genome + a set of user-specified control genome
 Subsamples 200 short reads for downstream nucleotide blast analysis.
 
 
-
-
 ### De novo assembly:
 
 Attempts a **de novo** assembly, genome annotation, resistance gene identification and MLST analyses to confirm identity.
@@ -45,7 +43,7 @@ From inside this directory.
 Build local version for OSX
 
 ```{bash}
-docker buildx build --platform linux/arm64 --load --tag selkamandcci/microbe-sleuth:0.0.1 .
+docker buildx build --platform linux/arm64 --load --tag selkamandcci/micrite-sleuth:0.0.1 .
 ```
 
 Build final version to push to dockerhub
@@ -53,4 +51,21 @@ Build final version to push to dockerhub
 ```{bash}
 docker buildx build --push --platform linux/amd64,linux/arm64 --tag selkamandcci/microbe-sleuth:0.0.1 .
 ```
+
+
+## Testing the pipeline
+
+There are three main ways to test the nextflow pipeline and ensure it runs on your machine
+
+You can use the test profile
+
+```
+nextflow run selkamand/micrite-sleuth -profile test
+```
+
+Alternatively, clone github repo, cd into it and run `nf-test (requires nf-test is installed)
+```
+nf-test test
+```
+
 

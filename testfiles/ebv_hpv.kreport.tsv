@@ -1,0 +1,17 @@
+# KrakenUniq v1.0.4 DATE:2026-02-19T04:14:21Z DB:/Users/selkamand/databases/krakenuniq/refseq_ebv_hpv/ DB_SIZE:2173144 WD:/Users/selkamand/packages/micrite-sleuth/testfiles
+# CL:/Users/selkamand/tools/krakenuniq/krakenuniq --db /Users/selkamand/databases/krakenuniq/refseq_ebv_hpv/ --paired --report-file ebv_hpv.kreport.tsv --output ebv_hpv.kout.tsv ebv_500_hpv16_500.R1.fq ebv_500_hpv16_500.R2.fq
+%	reads	taxReads	kmers	dup	cov	taxID	rank	taxName
+50	1000	1000	36793	6.92	NA	0	no rank	unclassified
+50	1000	0	109445	2.06	0.5199	1	no rank	root
+50	1000	0	109445	2.06	0.5199	10239	acellular root	  Viruses
+50	1000	0	109445	2.06	0.5384	2731341	realm	    Duplodnaviria
+50	1000	0	109445	2.06	0.5384	2731360	kingdom	      Heunggongvirae
+50	1000	0	109445	2.06	0.5384	2731361	phylum	        Peploviricota
+50	1000	0	109445	2.06	0.5384	2731363	class	          Herviviricetes
+50	1000	0	109445	2.06	0.5384	548681	order	            Herpesvirales
+50	1000	0	109445	2.06	0.5384	3044472	family	              Orthoherpesviridae
+50	1000	0	109445	2.06	0.5384	10374	subfamily	                Gammaherpesvirinae
+50	1000	0	109445	2.06	0.5384	10375	genus	                  Lymphocryptovirus
+50	1000	0	109445	2.06	0.5384	3050299	species	                    Lymphocryptovirus humangamma4
+50	1000	997	109445	2.06	0.5384	10376	no rank	                      human gammaherpesvirus 4
+0.15	3	3	70	1	0.001186	12509	no rank	                        Human herpesvirus 4 type 2
