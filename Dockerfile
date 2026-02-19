@@ -78,7 +78,7 @@ RUN apk add parallel
 
 # Install fastqc
 ENV FASTQC_VERSION=0.12.1
-RUN apk add openjdk21
+RUN apk add --no-cache openjdk21 fontconfig ttf-dejavu
 RUN wget "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip" \
   && unzip "fastqc_v${FASTQC_VERSION}.zip" \
   && cp -r /FastQC/* /usr/local/bin
