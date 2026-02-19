@@ -71,6 +71,7 @@ workflow {
     // Extract reads that hit taxid (or descendant) 
     reads_from_taxid_ch = EXTRACT_READS_BY_TAXIDS(channel.of(tuple(sampleid, params.taxid, kraken, kreport, r1, r2)))
 
+    // QC the extracted reads
     qc_from_taxid_ch = QC_EXTRACTED_READS(reads_from_taxid_ch)
 
     publish:
