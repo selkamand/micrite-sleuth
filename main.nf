@@ -116,11 +116,59 @@ process ALIGN_SHORT_READS_TO_GENOME {
     ls -1 "\$outdir"/*.sorted.bam > "\$outdir/bams.list"
     """
 }
-
 process SHORT_ALIGNMENT_STATS {
+    tag "${sampleid}.${taxid}"
 
+    input:
+    tuple val(sampleid), val(taxid), path(alndir)
 
- } 
+    output:
+    tuple val(sampleid), val(taxid), path("alignment_stats_${taxid}")
+
+    script:
+    """
+    set -euo pipefail
+
+    out="alignment_stats_${taxid}"
+    mkdir -p "\$out"
+
+    shopt -s nullglob
+
+    bams=( "${alndir}"/*.sorted.bam )
+
+    if (( \${#bams[@]} == 0 )); then
+      echo "ERROR: No *.sorted.bam files found in: ${alndir}" >&2
+      exit 1
+    fi
+
+    for bam in "\${bams[@]}"; do
+      base=\$(basename "\$bam")
+      prefix="\$out/\${base%.sorted.bam}"
+
+      # Basic sanity: ensure index exists (samtools index creates .bam.bai by default)
+      if [[ ! -e "\$bam.bai" ]]; then
+        echo "ERROR: Missing BAM index: \$bam.bai" >&2
+        exit 1
+      fi
+
+      # Picard: alignment summary
+      picard CollectAlignmentSummaryMetrics \\
+        I="\$bam" \\
+        O="\${prefix}.picard.alignment_summary_metrics.txt"
+
+      # Picard: insert size metrics (paired-end; will still run for SE but is less meaningful)
+      picard CollectInsertSizeMetrics \\
+        I="\$bam" \\
+        O="\${prefix}.picard.insert_size_metrics.txt" \\
+        H="\${prefix}.picard.insert_size_histogram.pdf"
+
+      # mosdepth: fast summaries only
+      mosdepth -t ${task.cpus} -n "\${prefix}.mosdepth" "\$bam"
+      # keeps: \${prefix}.mosdepth.summary.txt and \${prefix}.mosdepth.global.dist.txt (and a few small extras)
+    done
+
+    """
+}
 
 workflow {
 
@@ -143,11 +191,13 @@ workflow {
         tuple(sid, tx, fq1, fq2, refgenomes)
     }
     aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(align_in_ch)
+    alignment_stats_ch = SHORT_ALIGNMENT_STATS(aligned_to_refs_ch)
 
     publish:
     extracted_reads = EXTRACT_READS_BY_TAXIDS.out
     extracted_fastqc = qc_from_taxid_ch
     alignments = aligned_to_refs_ch
+    alignment_stats = alignment_stats_ch
 }
 
 output {
@@ -160,6 +210,10 @@ output {
         mode 'copy'
     }
     alignments {
+        path "${params.outdir}/${params.sampleid}/"
+        mode 'copy'
+    }
+    alignment_stats {
         path "${params.outdir}/${params.sampleid}/"
         mode 'copy'
     }
