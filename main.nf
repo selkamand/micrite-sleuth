@@ -18,6 +18,11 @@ params {
     // Taxid to extract (will include children)
     taxid: Integer
 
+    // A folder containing bwa-mem2 + minimap2 indexed microbial genomes 
+    // Reads assigned to taxid X will be aligned to those reference genomes
+    refgenomes: Path
+
+
     // Size of sleuthing
     outdir: Path = "micritesleuth"
 }
@@ -59,6 +64,64 @@ process QC_EXTRACTED_READS {
     """
 }
 
+process ALIGN_SHORT_READS_TO_GENOME {
+    input:
+    tuple val(sampleid), val(taxid), path(r1), path(r2), path(refgenomes)
+
+    output:
+    tuple val(sampleid), val(taxid), path("aligning_${taxid}_reads_to_refgenomes")
+
+    script:
+    """
+    set -euo pipefail
+
+    outdir="aligning_${taxid}_reads_to_refgenomes"
+    mkdir -p "\$outdir"
+
+    shopt -s nullglob
+
+    # Collect references (support common FASTA extensions; include gz)
+    refs=( "${refgenomes}"/*.fa "${refgenomes}"/*.fna "${refgenomes}"/*.fasta "${refgenomes}"/*.fa.gz "${refgenomes}"/*.fna.gz "${refgenomes}"/*.fasta.gz )
+
+    if (( \${#refs[@]} == 0 )); then
+        echo "ERROR: No reference genomes found in: ${refgenomes}" >&2
+        echo "Looked for: *.fa *.fna *.fasta (optionally .gz)" >&2
+        exit 1
+    fi
+
+    echo "Found \${#refs[@]} reference genome(s) in ${refgenomes}" >&2
+
+    for ref in "\${refs[@]}"; do
+        base=\$(basename "\$ref")
+        # strip extensions safely
+        name="\${base%.gz}"
+        name="\${name%.fasta}"
+        name="\${name%.fna}"
+        name="\${name%.fa}"
+
+        prefix="\$outdir/${sampleid}.${taxid}.\$name"
+
+        echo "Aligning reads to \$ref -> \${prefix}.sorted.bam" >&2
+
+        # minimap2 outputs SAM to stdout; samtools sort makes coordinate-sorted BAM
+        minimap2 -t ${task.cpus} -ax sr "\$ref" "${r1}" "${r2}" \\
+          | samtools sort -@ ${task.cpus} -o "\${prefix}.sorted.bam" -
+
+        samtools index -@ ${task.cpus} "\${prefix}.sorted.bam"
+
+        
+    done
+
+    # Optional: manifest file for easy downstream consumption
+    ls -1 "\$outdir"/*.sorted.bam > "\$outdir/bams.list"
+    """
+}
+
+process SHORT_ALIGNMENT_STATS {
+
+
+ } 
+
 workflow {
 
     main:
@@ -67,6 +130,7 @@ workflow {
     def kraken = file(params.kraken)
     def kreport = file(params.kreport)
     def sampleid = params.sampleid
+    def refgenomes = file(params.refgenomes)
 
     // Extract reads that hit taxid (or descendant) 
     reads_from_taxid_ch = EXTRACT_READS_BY_TAXIDS(channel.of(tuple(sampleid, params.taxid, kraken, kreport, r1, r2)))
@@ -74,9 +138,16 @@ workflow {
     // QC the extracted reads
     qc_from_taxid_ch = QC_EXTRACTED_READS(reads_from_taxid_ch)
 
+    // Align extracted reads to each reference genome in the provided directory
+    align_in_ch = reads_from_taxid_ch.map { sid, tx, fq1, fq2 ->
+        tuple(sid, tx, fq1, fq2, refgenomes)
+    }
+    aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(align_in_ch)
+
     publish:
     extracted_reads = EXTRACT_READS_BY_TAXIDS.out
     extracted_fastqc = qc_from_taxid_ch
+    alignments = aligned_to_refs_ch
 }
 
 output {
@@ -85,6 +156,10 @@ output {
         mode 'copy'
     }
     extracted_fastqc {
+        path "${params.outdir}/${params.sampleid}/"
+        mode 'copy'
+    }
+    alignments {
         path "${params.outdir}/${params.sampleid}/"
         mode 'copy'
     }
