@@ -106,3 +106,10 @@ RUN wget "https://github.com/stjude-rust-labs/fq/releases/download/v${FQ_VERSION
 ENV MOSDEPTH_VERSION=0.3.12
 RUN wget -O /usr/local/bin/mosdepth "https://github.com/brentp/mosdepth/releases/download/v${MOSDEPTH_VERSION}/mosdepth" \
   && chmod +x /usr/local/bin/mosdepth
+
+# Install picard
+ENV PICARD_VERSION=3.4.0
+RUN wget "https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard.jar" \
+  && echo echo '#!/usr/bin/env bash' > /usr/local/bin/picard && echo 'java -jar /picard.jar "$@"' >> /usr/local/bin/picard \
+  && chmod +x /usr/local/bin/picard
+
