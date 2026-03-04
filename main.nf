@@ -54,13 +54,14 @@ process QC_EXTRACTED_READS {
     tuple val(sampleid), val(taxid), path(fq1), path(fq2)
 
     output:
-    tuple val(sampleid), val(taxid), path("stats")
+    tuple val(sampleid), val(taxid), path("read_stats")
 
     script:
     """
-    mkdir -p stats
-    fastqc --nogroup -o stats ${fq1} ${fq2}
-    seqkit stats ${fq1} ${fq2} > stats/seqkit.stats.tsv
+    outdir="read_stats"
+    mkdir -p "\${outdir}"
+    fastqc --nogroup -o "\${outdir}" ${fq1} ${fq2}
+    seqkit stats ${fq1} ${fq2} > "\${outdir}/seqkit.stats.tsv"
     """
 }
 
@@ -69,13 +70,13 @@ process ALIGN_SHORT_READS_TO_GENOME {
     tuple val(sampleid), val(taxid), path(r1), path(r2), path(refgenomes)
 
     output:
-    tuple val(sampleid), val(taxid), path("aligning_${taxid}_reads_to_refgenomes")
+    tuple val(sampleid), val(taxid), path("short_read_alignments")
 
     script:
     """
     set -euo pipefail
 
-    outdir="aligning_${taxid}_reads_to_refgenomes"
+    outdir="short_read_alignments"
     mkdir -p "\$outdir"
 
     shopt -s nullglob
@@ -123,13 +124,13 @@ process SHORT_ALIGNMENT_STATS {
     tuple val(sampleid), val(taxid), path(alndir)
 
     output:
-    tuple val(sampleid), val(taxid), path("alignment_stats_${taxid}")
+    tuple val(sampleid), val(taxid), path("alignment_stats")
 
     script:
     """
     set -euo pipefail
 
-    out="alignment_stats_${taxid}"
+    out="alignment_stats"
     mkdir -p "\$out"
 
     shopt -s nullglob
@@ -195,26 +196,26 @@ workflow {
 
     publish:
     extracted_reads = EXTRACT_READS_BY_TAXIDS.out
-    extracted_fastqc = qc_from_taxid_ch
+    extracted_read_fastqc = qc_from_taxid_ch
     alignments = aligned_to_refs_ch
     alignment_stats = alignment_stats_ch
 }
 
 output {
     extracted_reads {
-        path "${params.outdir}/${params.sampleid}/"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/reads/"
         mode 'copy'
     }
-    extracted_fastqc {
-        path "${params.outdir}/${params.sampleid}/"
+    extracted_read_fastqc {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}"
         mode 'copy'
     }
     alignments {
-        path "${params.outdir}/${params.sampleid}/"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}"
         mode 'copy'
     }
     alignment_stats {
-        path "${params.outdir}/${params.sampleid}/"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}"
         mode 'copy'
     }
 }
