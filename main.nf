@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 params {
 
@@ -24,6 +24,18 @@ params {
     // Reads assigned to taxid X will be aligned to those reference genomes
     refgenomes: Path
 
+
+    // [[ Conditional parts of pipelines ]]
+
+    // Run remote BLAST
+    run_remote_blastn: Boolean = false
+
+    // Number of reads to remote blast 
+    blastn_reads: Integer = 200
+
+    // Run de novo assembly
+    run_assembly: Boolean = true
+
     // output directory
     outdir: Path = "micritesleuth"
 }
@@ -32,6 +44,11 @@ include { EXTRACT_READS_BY_TAXID } from "./modules/krakentools.nf"
 include { QC_EXTRACTED_READS } from "./modules/qc_extracted_reads.nf"
 include { ALIGN_SHORT_READS_TO_GENOME } from "./modules/align_short_reads.nf"
 include { QC_SHORT_ALIGNMENTS } from "./modules/qc_short_alignments.nf"
+include { SUBSAMPLE_FQ } from "./modules/subsample.nf"
+include { BLASTN } from "./modules/blastn.nf"
+include { ASSEMBLE } from "./modules/assemble.nf"
+include { ALIGN_WHOLE_GENOMES } from "./modules/align_whole_genomes.nf"
+include { QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/qc_whole_genome_alignments.nf"
 
 workflow {
 
@@ -58,11 +75,61 @@ workflow {
     // QC the short read alignments with picard and mosdepth
     qc_short_alignments_ch = QC_SHORT_ALIGNMENTS(aligned_to_refs_ch)
 
+    // Initialize optional outputs as empty channels
+    subsample_for_blastn_ch = channel.empty()
+    blastn_ch = channel.empty()
+    assembly_ch = channel.empty()
+
+    // Subsample and remote blast 
+    if (params.run_remote_blastn) {
+
+        // Define how many reads to blastn (will be taken from R1 fq)
+        def nreads = params.blastn_reads
+        // TODO: if user-specified blastn_nreads is > than the number of reads in R1 fastq, we should just blast all possible reads in FQ.
+
+        // Perform subsampling
+        subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) }
+            | SUBSAMPLE_FQ
+
+        // Perform blastn 
+        blastn_ch = BLASTN(subsample_for_blastn_ch)
+    }
+
+    // Run de novo assembly 
+    if (params.run_assembly) {
+        // TODO: add subsample to 30x depth if we have enough reads 
+
+        // Create de novo assembly
+        assembly_ch = ASSEMBLE(reads_from_taxid_ch)
+
+        // Create assembly output channel (we don't want to output assembly fasta twice, once from direct path & once from directory)
+        assembly_output_ch = assembly_ch.map { sid, tx, _assembly_fasta, assembly_dir -> tuple(sid, tx, assembly_dir) }
+
+        // Perform whole-genome alignments
+        whole_genome_alignments_ch = assembly_ch.map { sid, tx, assembly_fasta, _assembly_dir ->
+            tuple(
+                sid,
+                tx,
+                assembly_fasta,
+                refgenomes,
+            )
+        }
+            | ALIGN_WHOLE_GENOMES
+
+        // Compute Stats on whole genome alignments
+        whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch)
+    }
+
     publish:
     extracted_reads = reads_from_taxid_ch
     extracted_read_fastqc = qc_from_taxid_ch
     alignments = aligned_to_refs_ch
     alignment_stats = qc_short_alignments_ch
+    subsampled_reads_for_blastn = subsample_for_blastn_ch
+    blastn = blastn_ch
+    assembly = assembly_output_ch
+    whole_genome_alignments = whole_genome_alignments_ch
+    whole_genome_alignment_stats = whole_genome_alignment_stats_ch
 }
 
 output {
@@ -80,6 +147,26 @@ output {
     }
     alignment_stats {
         path "${params.outdir}/${params.sampleid}/${params.taxid}"
+        mode 'copy'
+    }
+    subsampled_reads_for_blastn {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/blastn/"
+        mode 'copy'
+    }
+    blastn {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/blastn/"
+        mode 'copy'
+    }
+    assembly {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        mode 'copy'
+    }
+    whole_genome_alignments {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        mode 'copy'
+    }
+    whole_genome_alignment_stats {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
         mode 'copy'
     }
 }

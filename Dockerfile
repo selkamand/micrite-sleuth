@@ -113,3 +113,14 @@ RUN wget "https://github.com/broadinstitute/picard/releases/download/${PICARD_VE
   && echo echo '#!/usr/bin/env bash' > /usr/local/bin/picard && echo 'java -jar /picard.jar "$@"' >> /usr/local/bin/picard \
   && chmod +x /usr/local/bin/picard
 
+# Install blastn (compile from source)
+ENV BLASTN_VERSION=2.17.0 
+RUN wget "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLASTN_VERSION}/ncbi-blast-${BLASTN_VERSION}+-src.tar.gz" \
+  && tar xzf "ncbi-blast-${BLASTN_VERSION}+-src.tar.gz" \
+  && cd /ncbi-blast-2.17.0+-src/c++ \ 
+  && ./configure \
+  && cd /ncbi-blast-2.17.0+-src/c++/ReleaseMT/build && /usr/bin/make all_r
+
+# && chmod +x "/ncbi-blast-${BLASTN_VERSION}+/bin/.*"
+# ENV PATH=/ncbi-blast-${BLASTN_VERSION}+/bin/:$PATH
+
