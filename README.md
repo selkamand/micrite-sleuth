@@ -15,6 +15,13 @@ nextflow run selkamand/micrite-sleuth \
   --taxid 9606
 ```
 
+Due to the number of parameters required by microbial-sleuth we recommend running using a parameters.yaml file.
+E.g. to run from the root directory of this repo: 
+
+```
+nextflow run . -profile docker -params-file params.yaml
+```
+
 ## Approach
 
 

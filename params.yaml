@@ -1,0 +1,24 @@
+## sample identifier
+sampleid: "test"
+
+##Kraken result file (stdout)
+kraken: "testfiles/ebv_hpv.kout.tsv"
+
+## Kraken Report (used to identify child taxids)
+kreport: "testfiles/ebv_hpv.kreport.tsv"
+
+## Path to fastq reads classified
+r1: "testfiles/ebv_1000_hpv16_1000.R1.fq"
+
+## Path to fastq reads classified
+r2: "testfiles/ebv_1000_hpv16_1000.R2.fq"
+
+## Taxid to extract (will include children)
+taxid: 3050299
+
+## A folder containing bwa-mem2 + minimap2 indexed microbial genomes
+## Reads assigned to taxid X will be aligned to those reference genomes
+refgenomes: "testfiles/refgenomes"
+
+## output directory
+outdir: "micritesleuth"
