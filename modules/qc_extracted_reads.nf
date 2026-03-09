@@ -10,13 +10,11 @@ process QC_EXTRACTED_READS {
     tuple val(sampleid), val(taxid), path(fq1), path(fq2)
 
     output:
-    tuple val(sampleid), val(taxid), path("read_stats")
+    tuple val(sampleid), val(taxid), path("seqkit.stats.tsv"), path("test.taxid_${taxid}.R1_fastqc.zip"), path("test.taxid_${taxid}.R2_fastqc.zip"), path("test.taxid_${taxid}.R1_fastqc.html"), path("test.taxid_${taxid}.R2_fastqc.html")
 
     script:
     """
-    outdir="read_stats"
-    mkdir -p "\${outdir}"
-    fastqc --nogroup -o "\${outdir}" ${fq1} ${fq2}
-    seqkit stats ${fq1} ${fq2} > "\${outdir}/seqkit.stats.tsv"
+    fastqc --nogroup ${fq1} ${fq2}
+    seqkit stats ${fq1} ${fq2} > "seqkit.stats.tsv"
     """
 }

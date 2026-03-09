@@ -71,7 +71,7 @@ output {
         mode 'copy'
     }
     extracted_read_fastqc {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/read_stats"
         mode 'copy'
     }
     alignments {
