@@ -10,11 +10,11 @@ process QC_EXTRACTED_READS {
     tuple val(sampleid), val(taxid), path(fq1), path(fq2)
 
     output:
-    tuple val(sampleid), val(taxid), path("seqkit.stats.tsv"), path("test.taxid_${taxid}.R1_fastqc.zip"), path("test.taxid_${taxid}.R2_fastqc.zip"), path("test.taxid_${taxid}.R1_fastqc.html"), path("test.taxid_${taxid}.R2_fastqc.html")
+    tuple val(sampleid), val(taxid), path("${sampleid}.taxid_${taxid}.stats.tsv"), path("test.taxid_${taxid}.R1_fastqc.zip"), path("test.taxid_${taxid}.R2_fastqc.zip"), path("test.taxid_${taxid}.R1_fastqc.html"), path("test.taxid_${taxid}.R2_fastqc.html")
 
     script:
     """
     fastqc --nogroup ${fq1} ${fq2}
-    seqkit stats ${fq1} ${fq2} > "seqkit.stats.tsv"
+    seqkit stats --tabular ${fq1} ${fq2} > "${sampleid}.taxid_${taxid}.stats.tsv"
     """
 }
