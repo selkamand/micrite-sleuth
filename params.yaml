@@ -20,5 +20,21 @@ taxid: 3050299
 ## Reads assigned to taxid X will be aligned to those reference genomes
 refgenomes: "testfiles/refgenomes"
 
+## Whole Genome Assembly Quast Stats
+quast_est_ref_size: 1000
+quast_min_contig: 50
+
+## Should we annotate bacterial genomes that we assemble de novo?
+run_assembly_annotation: false # We keep this false because we need
+bakta_database: "testfiles/bakta_db"
+
+## Path to BAKTA database for bacterial genome annotation
+#### This database is a toy db for testing. Please install the full bakta database by running
+#### `bakta_db download --output bakta_db` and change to that
+#bakta_database: "testfiles/bakta_db"
+
+## Run Remote Blast on subsample of 200 reads
+run_remote_blastn: false
+
 ## output directory
 outdir: "micritesleuth"

@@ -2,6 +2,8 @@
 
 // Use fq to substample nreads then convert to fasta to run blast
 process BLASTN {
+
+    container "community.wave.seqera.io/library/blast:2.17.0--d4fb881691596759"
     cpus 1
 
     input:

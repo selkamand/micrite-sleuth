@@ -121,6 +121,8 @@ RUN wget "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLASTN_VERSION
   && ./configure \
   && cd /ncbi-blast-2.17.0+-src/c++/ReleaseMT/build && /usr/bin/make all_r
 
+# Install barrnap 
+
 # && chmod +x "/ncbi-blast-${BLASTN_VERSION}+/bin/.*"
 # ENV PATH=/ncbi-blast-${BLASTN_VERSION}+/bin/:$PATH
 
