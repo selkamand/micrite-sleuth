@@ -110,18 +110,18 @@ workflow {
     annotation_ch = channel.empty()
     quast_ch = channel.empty()
 
-    // Subsample and remote blast 
+    // Subsample a small number of reads classified at/under taxid  
+    // (these will later be used for blastn)
+    // Define how many reads to blastn (will be taken from R1 fq)
+    // TODO: if user-specified blastn_nreads is > than the number of reads in R1 fastq, we should just blast all possible reads in FQ.
+    def nreads = params.blastn_reads
+
+    // Perform subsampling 
+    subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) }
+        | SUBSAMPLE_FQ
+
+    // Perform blastn 
     if (params.run_remote_blastn) {
-
-        // Define how many reads to blastn (will be taken from R1 fq)
-        def nreads = params.blastn_reads
-        // TODO: if user-specified blastn_nreads is > than the number of reads in R1 fastq, we should just blast all possible reads in FQ.
-
-        // Perform subsampling
-        subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) }
-            | SUBSAMPLE_FQ
-
-        // Perform blastn 
         blastn_ch = BLASTN(subsample_for_blastn_ch)
     }
 
