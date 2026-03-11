@@ -20,8 +20,8 @@ taxid: 3050299
 ## Reads assigned to taxid X will be aligned to those reference genomes
 refgenomes: "testfiles/refgenomes"
 
-## Whole Genome Assembly Quast Stats
-genome_size_guess: 1000
+## Whole Genome Assembly Config (best guess)
+genome_size_guess: 172000
 quast_min_contig: 50
 
 ## Should we annotate bacterial genomes that we assemble de novo?

@@ -34,6 +34,7 @@ params {
 
     // Run de novo assembly
     run_assembly: Boolean = true
+    skip_pre_assembly_downsampling: Boolean = false
 
     // Run bacterial genome annotation
     run_assembly_annotation: Boolean = false
@@ -64,6 +65,8 @@ include { QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/qc_whole_genome_alignment
 include { ANNOTATE_BACTERIAL_GENOME } from "./modules/annotate_bacterial_genome.nf"
 include { BARRNAP } from "./modules/extract_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/quast.nf"
+include { COUNT_TOTAL_BASES } from "./modules/parse_seqkit_stats.nf"
+include { SUBSAMPLE_BY_PROPORTION } from "./modules/subsample_by_proportion.nf"
 
 workflow {
 
@@ -75,6 +78,9 @@ workflow {
     def sampleid = params.sampleid
     def refgenomes = file(params.refgenomes)
     def bakta_database = params.bakta_database != null ? file(params.bakta_database) : null
+
+    // When downsampling reads for de novo assembly we should aim for ~30x coverage
+    def assembly_target_cov = 30
 
     //Parameter checks
     if (params.run_assembly_annotation) {
@@ -118,44 +124,67 @@ workflow {
     // TODO: if user-specified blastn_nreads is > than the number of reads in R1 fastq, we should just blast all possible reads in FQ.
     def nreads = params.blastn_reads
 
-    // Perform subsampling 
+    // Perform subsampling
     subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) }
         | SUBSAMPLE_FQ
 
-    // Perform blastn 
+    // Perform blastn
     if (params.run_remote_blastn) {
         blastn_ch = BLASTN(subsample_for_blastn_ch)
     }
 
     // Run de novo assembly 
     if (params.run_assembly) {
-        // TODO: add subsample to 30x depth if we have enough reads 
 
         // Subsample reads to ~30x coverage based on genome_size_guess. 
+        // Parse total reads into nextflow channel (used later for downsampling to 30x estimated genome size)
+        stats_for_downsampling_raw_ch = COUNT_TOTAL_BASES(qc_from_taxid_ch.seqkit)
+            .map { id, taxid, statfile ->
+                def total_length = statfile.text.trim() as Integer
+                def current_depth = total_length / params.genome_size_guess
+                def subsample_prop = 30 / current_depth
+                // def stats = [total_length: total_length, current_depth: current_depth, subsample_prop: subsample_prop, target_cov: assembly_target_cov]
+                tuple(id, taxid, subsample_prop)
+            }
+            .view { v -> "Extracted Read Stats for Downsampling: ${v}" }
+
+        // Enrich with actual read paths 
+        // Also branch based on wether we have too many / too few reads
+        stats_for_downsampling_ch = reads_from_taxid_ch
+            .join(stats_for_downsampling_raw_ch, by: [0, 1])
+            .branch { _sid, _tx, _fq1, _fq2, prop ->
+                subsample: prop < 1 && !params.skip_pre_assembly_downsampling
+                full: true
+            }
+
+        // stats_for_downsampling_ch.subsample.view { v -> "[Subsample] ${v}" }
+        // stats_for_downsampling_ch.full.view { v -> "[Branch] ${v}" }
+
+        // Subsample reads (will be empty if branch is full instead of subsample)
+        subsampled_reads_for_assembly_ch = SUBSAMPLE_BY_PROPORTION(stats_for_downsampling_ch.subsample)
+
+        // If branch is full just pass along reads
+        full_taxid_reads_for_assembly_ch = stats_for_downsampling_ch.full.map { sid, tx, fq1, fq2, _prop -> tuple(sid, tx, fq1, fq2) }
+
+        // Create assembly imput by mixing the two possible channel branches
+        assembly_input_ch = full_taxid_reads_for_assembly_ch.mix(subsampled_reads_for_assembly_ch).view { v -> "Assembly Input: ${v}" }
 
         // Create de novo assembly
         // Note assembly_raw channel includes both contigs.fasta AND the whole genome Dir
-        assembly_raw_ch = ASSEMBLE(reads_from_taxid_ch)
-
-        // Create assembly output channel (we don't want to output assembly fasta twice, once from direct path & once from directory)
-        assembly_output_ch = assembly_ch.map { sid, tx, _assembly_fasta, assembly_dir -> tuple(sid, tx, assembly_dir) }
-
-        // Create a simpler channel that just includes sample, taxid, and path to fasta
-        // This is the channel we'll feed into most downstream operations
-        assembly_ch = assembly_raw_ch.map { sid, tx, assembly_fasta, _assembly_dir -> tuple(sid, tx, assembly_fasta) }
+        assembly_ch = ASSEMBLE(assembly_input_ch)
 
         // Perform whole-genome alignments
-        whole_genome_alignments_ch = assembly_ch.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, refgenomes) }
+        whole_genome_alignments_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, refgenomes) }
             | ALIGN_WHOLE_GENOMES
 
         // Compute Stats on whole genome alignments
         whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch)
 
-        // Barrnap 16/23S rRNA extraction from de ovo assembly
-        barrnap_ch = BARRNAP(assembly_ch)
+        // Barrnap 16/23S rRNA extraction from de novo assembly
+        barrnap_ch = BARRNAP(assembly_ch.contigs)
 
         // Run QUAST QC on de novo assembly.
-        quast_in = assembly_ch.map { sid, tx, assembly_fasta ->
+        quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
             tuple(
                 sid,
                 tx,
@@ -169,19 +198,21 @@ workflow {
 
         // Annotate genome with BAKTA
         if (params.run_assembly_annotation & taxid_is_bacterial) {
-            annotation_ch = assembly_ch.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) }
+            annotation_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) }
                 | ANNOTATE_BACTERIAL_GENOME
         }
     }
 
     publish:
     extracted_reads = reads_from_taxid_ch
-    extracted_read_fastqc = qc_from_taxid_ch
+    extracted_read_fastqc = qc_from_taxid_ch.fastqc
+    extracted_read_seqkit = qc_from_taxid_ch.seqkit
     alignments = aligned_to_refs_ch
     alignment_stats = qc_short_alignments_ch
     subsampled_reads_for_blastn = subsample_for_blastn_ch
     blastn = blastn_ch
-    assembly = assembly_output_ch
+    subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
+    assembly = assembly_ch.all_results
     whole_genome_alignments = whole_genome_alignments_ch
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
     annotation = annotation_ch
@@ -195,6 +226,10 @@ output {
         mode 'copy'
     }
     extracted_read_fastqc {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/read_stats"
+        mode 'copy'
+    }
+    extracted_read_seqkit {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/read_stats"
         mode 'copy'
     }
@@ -212,6 +247,10 @@ output {
     }
     blastn {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/blastn/"
+        mode 'copy'
+    }
+    subsampled_reads_for_assembly {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/reads/subsampled_for_assembly/"
         mode 'copy'
     }
     assembly {
