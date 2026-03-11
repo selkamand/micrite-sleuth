@@ -41,10 +41,12 @@ params {
     // Path to bakta database directory
     bakta_database: Path? = null
 
+    // What size would we expect the genome size to be 
+    // (used in quast QC NG50 calculations and subsampling reads to ~30X coverage ahead of assembly)
+    genome_size_guess: Integer
+
     // QUAST de novo genome QC config 
     quast_min_contig: Integer
-    quast_est_ref_size: Integer
-
 
     // output directory
     outdir: Path = "micritesleuth"
@@ -129,6 +131,8 @@ workflow {
     if (params.run_assembly) {
         // TODO: add subsample to 30x depth if we have enough reads 
 
+        // Subsample reads to ~30x coverage based on genome_size_guess. 
+
         // Create de novo assembly
         // Note assembly_raw channel includes both contigs.fasta AND the whole genome Dir
         assembly_raw_ch = ASSEMBLE(reads_from_taxid_ch)
@@ -157,7 +161,7 @@ workflow {
                 tx,
                 assembly_fasta,
                 params.quast_min_contig,
-                params.quast_est_ref_size,
+                params.genome_size_guess,
             )
         }
 

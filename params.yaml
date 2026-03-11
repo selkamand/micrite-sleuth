@@ -21,7 +21,7 @@ taxid: 3050299
 refgenomes: "testfiles/refgenomes"
 
 ## Whole Genome Assembly Quast Stats
-quast_est_ref_size: 1000
+genome_size_guess: 1000
 quast_min_contig: 50
 
 ## Should we annotate bacterial genomes that we assemble de novo?
