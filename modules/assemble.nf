@@ -2,6 +2,8 @@
 
 // Assemble genome de novo using SPADES.py 
 process ASSEMBLE {
+    cpus 8
+
     input:
     tuple val(sampleid), val(taxid), path(r1), path(r2)
 
