@@ -136,13 +136,13 @@ workflow {
     // Run de novo assembly 
     if (params.run_assembly) {
 
-        // Subsample reads to ~30x coverage based on genome_size_guess. 
+        // Subsample reads to ~30x coverage (or whatever assembly_target_cov is set to) based on genome_size_guess. 
         // Parse total reads into nextflow channel (used later for downsampling to 30x estimated genome size)
         stats_for_downsampling_raw_ch = COUNT_TOTAL_BASES(qc_from_taxid_ch.seqkit)
             .map { id, taxid, statfile ->
                 def total_length = statfile.text.trim() as Integer
                 def current_depth = total_length / params.genome_size_guess
-                def subsample_prop = 30 / current_depth
+                def subsample_prop = assembly_target_cov / current_depth
                 // def stats = [total_length: total_length, current_depth: current_depth, subsample_prop: subsample_prop, target_cov: assembly_target_cov]
                 tuple(id, taxid, subsample_prop)
             }
