@@ -5,6 +5,8 @@
 
 process QC_EXTRACTED_READS {
     tag "${sampleid}.${taxid}"
+    cpus 2
+    memory 512.MB
 
     input:
     tuple val(sampleid), val(taxid), path(fq1), path(fq2)
@@ -15,7 +17,7 @@ process QC_EXTRACTED_READS {
 
     script:
     """
-    fastqc --nogroup ${fq1} ${fq2}
-    seqkit stats --tabular ${fq1} ${fq2} > "${sampleid}.taxid_${taxid}.stats.tsv"
+    fastqc --memory 512MB -t ${task.cpus} --nogroup ${fq1} ${fq2}
+    seqkit stats --threads ${task.cpus} --tabular ${fq1} ${fq2} > "${sampleid}.taxid_${taxid}.stats.tsv"
     """
 }
