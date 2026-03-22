@@ -43,9 +43,9 @@ Attempts a **de novo** assembly, genome annotation, resistance gene identificati
 Also does a whole genome alignment against target reference genome (& panel of comparative samples).
 
 
-## Building the dockerfile
+## Building the dockerfiles
 
-From inside this directory.
+From inside this directory navigate to `dockers/micrite-sleuth`.
 
 Build local version for OSX
 
@@ -59,6 +59,7 @@ Build final version to push to dockerhub
 docker buildx build --push --platform linux/amd64,linux/arm64 --tag selkamandcci/microbe-sleuth:0.0.1 .
 ```
 
+Repeat for other docker images (e.g `dockers/quast`)
 
 ## Testing the pipeline
 
