@@ -49,6 +49,11 @@ params {
     // QUAST de novo genome QC config 
     quast_min_contig: Integer
 
+    // Busco settings for genome completeness
+    run_busco: Boolean = false
+    busco_lineage: String?
+    busco_dataset: Path?
+
     // output directory
     outdir: Path = "micritesleuth"
 }
@@ -67,6 +72,7 @@ include { BARRNAP } from "./modules/extract_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/subsample_by_proportion.nf"
+include { BUSCO_COMPLETENESS } from "./modules/busco.nf"
 
 workflow {
 
@@ -83,6 +89,29 @@ workflow {
     def assembly_target_cov = 30
 
     //Parameter checks
+    if (params.run_assembly == false) {
+        if (params.run_assembly_annotation) {
+            error("Can NOT run assembly annotation if assembly is going to be skipped. Either set --run_assembly_annotation to false or --run_assembly to true")
+        }
+        if (params.run_busco) {
+            error("Can NOT run assembly completeness (BUSCO) evaluation if assembly is going to be skipped. Either set --run_busco to false or --run_assembly to true")
+        }
+    }
+
+    if (params.run_busco) {
+        if (params.busco_lineage == null) {
+            error("A --busco_lineage must be specified if --run_busco flag is supplied")
+        }
+        if (params.busco_dataset == null) {
+            error("A busco dataset must be specified if --run_busco flag is supplied")
+        }
+
+        busco_dataset = file(params.busco_dataset)
+        if (!busco_dataset.exists()) {
+            error("BUSCO dataset ${busco_dataset} does not exist")
+        }
+    }
+
     if (params.run_assembly_annotation) {
         if (bakta_database == null) {
             error("--bakta_database paramater must be provided when --run_assembly_annotation is true")
@@ -91,6 +120,7 @@ workflow {
             error("Failed to find bakta genome annotation database: [${params.bakta_database}]. Please ensure --bakta_database parameter points to a valid bakta database.")
         }
     }
+
 
 
     // Extract reads that hit taxid (or descendant) 
@@ -131,6 +161,9 @@ workflow {
     // Perform blastn
     if (params.run_remote_blastn) {
         blastn_ch = BLASTN(subsample_for_blastn_ch)
+    }
+    else {
+        blastn_ch = channel.empty()
     }
 
     // Run de novo assembly 
@@ -200,6 +233,17 @@ workflow {
             annotation_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) }
                 | ANNOTATE_BACTERIAL_GENOME
         }
+        else {
+            annotation_ch = channel.empty()
+        }
+
+        // BUSCO completeness
+        if (params.run_busco) {
+            busco_ch = BUSCO_COMPLETENESS(assembly_ch.contigs, params.busco_lineage, busco_dataset)
+        }
+        else {
+            busco_ch = channel.empty()
+        }
     }
 
     publish:
@@ -217,6 +261,7 @@ workflow {
     annotation = annotation_ch
     barrnap = barrnap_ch
     quast = quast_ch
+    busco = busco_ch
 }
 
 output {
@@ -273,6 +318,10 @@ output {
         mode 'copy'
     }
     quast {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        mode 'copy'
+    }
+    busco {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/"
         mode 'copy'
     }
