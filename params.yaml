@@ -33,6 +33,9 @@ bakta_database: "testfiles/bakta_db"
 #### `bakta_db download --output bakta_db` and change to that
 #bakta_database: "testfiles/bakta_db"
 
+## BUSCO
+run_busco: false
+
 ## Run Remote Blast on subsample of 200 reads?
 run_remote_blastn: false
 
