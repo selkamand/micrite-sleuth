@@ -50,13 +50,13 @@ From inside this directory navigate to `dockers/micrite-sleuth`.
 Build local version for OSX
 
 ```{bash}
-docker buildx build --platform linux/arm64 --load --tag selkamandcci/micrite-sleuth:0.0.1 .
+docker buildx build --platform linux/arm64 --load --tag selkamandcci/micrite-sleuth:0.0.2 .
 ```
 
 Build final version to push to dockerhub
 
 ```{bash}
-docker buildx build --push --platform linux/amd64,linux/arm64 --tag selkamandcci/microbe-sleuth:0.0.1 .
+docker buildx build --push --platform linux/amd64,linux/arm64 --tag selkamandcci/microbe-sleuth:0.0.2 .
 ```
 
 Repeat for other docker images (e.g `dockers/quast`)
