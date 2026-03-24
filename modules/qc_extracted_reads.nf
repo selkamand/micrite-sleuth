@@ -18,7 +18,11 @@ process QC_EXTRACTED_READS {
     script:
     """
     mkdir -p cache
+    mkdir -p config
+
     export XDG_CACHE_HOME=cache
+    export MPLCONFIGDIR=config
+
     fastqc --memory 512MB -t ${task.cpus} --nogroup ${fq1} ${fq2}
     seqkit stats --threads ${task.cpus} --tabular ${fq1} ${fq2} > "${sampleid}.taxid_${taxid}.stats.tsv"
     """
