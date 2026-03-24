@@ -13,7 +13,7 @@ process QC_EXTRACTED_READS {
 
     output:
     tuple val(sampleid), val(taxid), path("${sampleid}.taxid_${taxid}.stats.tsv"), emit: seqkit
-    tuple path("test.taxid_${taxid}.R1_fastqc.zip"), path("test.taxid_${taxid}.R2_fastqc.zip"), path("test.taxid_${taxid}.R1_fastqc.html"), path("test.taxid_${taxid}.R2_fastqc.html"), emit: fastqc
+    tuple path("${sampleid}.taxid_${taxid}.R1_fastqc.zip"), path("${sampleid}.taxid_${taxid}.R2_fastqc.zip"), path("${sampleid}.taxid_${taxid}.R1_fastqc.html"), path("${sampleid}.taxid_${taxid}.R2_fastqc.html"), emit: fastqc
 
     script:
     """
