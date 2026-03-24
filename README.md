@@ -68,8 +68,11 @@ There are three main ways to test the nextflow pipeline and ensure it runs on yo
 You can use the test profile
 
 ```
-nextflow run selkamand/micrite-sleuth -profile test
+nextflow run selkamand/micrite-sleuth -profile docker,test
 ```
+
+Replace docker with `singularity` / `apptainer` / etc. depending on your platform
+
 
 Alternatively, clone github repo, cd into it and run `nf-test (requires nf-test is installed)
 ```
