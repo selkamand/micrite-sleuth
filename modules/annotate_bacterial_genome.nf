@@ -15,6 +15,11 @@ process ANNOTATE_BACTERIAL_GENOME {
     """
     set -euo pipefail
    
+    mkdir -p cache
+    mkdir -p config
+
+    export XDG_CACHE_HOME=cache
+    export MPLCONFIGDIR=config
 
     out="annotation"
     mkdir -p "\$out"
