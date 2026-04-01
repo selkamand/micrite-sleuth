@@ -1,0 +1,17 @@
+{
+  "name": "selkamand/micrite-sleuth",
+  "homePage": "https://github.com/selkamand/micrite-sleuth",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "multiqc": {
+            "branch": "master",
+            "git_sha": "79b36b51048048374b642289bfe9e591ef56fe05",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    }
+  }
+}

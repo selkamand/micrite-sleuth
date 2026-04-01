@@ -58,21 +58,22 @@ params {
     outdir: Path = "micritesleuth"
 }
 
-include { EXTRACT_READS_BY_TAXID } from "./modules/krakentools.nf"
-include { QC_EXTRACTED_READS } from "./modules/qc_extracted_reads.nf"
-include { ALIGN_SHORT_READS_TO_GENOME } from "./modules/align_short_reads.nf"
-include { QC_SHORT_ALIGNMENTS } from "./modules/qc_short_alignments.nf"
-include { SUBSAMPLE_FQ } from "./modules/subsample.nf"
-include { BLASTN } from "./modules/blastn.nf"
-include { ASSEMBLE } from "./modules/assemble.nf"
-include { ALIGN_WHOLE_GENOMES } from "./modules/align_whole_genomes.nf"
-include { QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/qc_whole_genome_alignments.nf"
-include { ANNOTATE_BACTERIAL_GENOME } from "./modules/annotate_bacterial_genome.nf"
-include { BARRNAP } from "./modules/extract_rrna_seqs.nf"
-include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/quast.nf"
-include { COUNT_TOTAL_BASES } from "./modules/parse_seqkit_stats.nf"
-include { SUBSAMPLE_BY_PROPORTION } from "./modules/subsample_by_proportion.nf"
-include { BUSCO_COMPLETENESS } from "./modules/busco.nf"
+include { EXTRACT_READS_BY_TAXID } from "./modules/local/krakentools.nf"
+include { QC_EXTRACTED_READS } from "./modules/local/qc_extracted_reads.nf"
+include { ALIGN_SHORT_READS_TO_GENOME } from "./modules/local/align_short_reads.nf"
+include { QC_SHORT_ALIGNMENTS } from "./modules/local/qc_short_alignments.nf"
+include { SUBSAMPLE_FQ } from "./modules/local/subsample.nf"
+include { BLASTN } from "./modules/local/blastn.nf"
+include { ASSEMBLE } from "./modules/local/assemble.nf"
+include { ALIGN_WHOLE_GENOMES } from "./modules/local/align_whole_genomes.nf"
+include { QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
+include { ANNOTATE_BACTERIAL_GENOME } from "./modules/local/annotate_bacterial_genome.nf"
+include { BARRNAP } from "./modules/local/extract_rrna_seqs.nf"
+include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
+include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
+include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
+include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
+include { MULTIQC } from '../modules/nf-core/multiqc/main'
 
 workflow {
 
