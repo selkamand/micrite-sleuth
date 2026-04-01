@@ -18,7 +18,7 @@ process BLASTN {
     blastn -db nt \
     -evalue 1e-10 \
     -max_target_seqs 20 \
-    -outfmt '6 std staxid qcovs qcovhsp stitle' \
+    -outfmt '7 std staxid qcovs qcovhsp stitle' \
     -perc_identity 90 -max_hsps 10 -subject_besthit \
     -remote \
     -out ${sampleid}.taxid_${taxid}.blastn.tsv \
