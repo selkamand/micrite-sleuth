@@ -73,7 +73,7 @@ include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
-include { MULTIQC } from './modules/nf-core/multiqc/main'
+include { MULTIQC } from './modules/local/multiqc.nf'
 
 workflow {
 
@@ -139,6 +139,8 @@ workflow {
     // QC the short read alignments with picard and mosdepth
     qc_short_alignments_ch = QC_SHORT_ALIGNMENTS(aligned_to_refs_ch)
 
+    // Compile short read alignment qc with multiqc 
+    multiqc_short_alignments_ch = MULTIQC(qc_short_alignments_ch)
 
     // TODO: update this so we dynamically check that taxid is indeed bacterial 
     taxid_is_bacterial = true
@@ -254,6 +256,8 @@ workflow {
     extracted_read_seqkit = qc_from_taxid_ch.seqkit
     alignments = aligned_to_refs_ch
     alignment_stats = qc_short_alignments_ch
+    alignment_multiqc_report = multiqc_short_alignments_ch.report
+    alignment_multiqc_data = multiqc_short_alignments_ch.data
     subsampled_reads_for_blastn = subsample_for_blastn_ch
     blastn = blastn_ch
     subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
@@ -285,6 +289,14 @@ output {
     }
     alignment_stats {
         path "${params.outdir}/${params.sampleid}/${params.taxid}"
+        mode 'copy'
+    }
+    alignment_multiqc_report {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/alignment_stats/multiqc"
+        mode 'copy'
+    }
+    alignment_multiqc_data {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/alignment_stats/multiqc"
         mode 'copy'
     }
     subsampled_reads_for_blastn {
