@@ -73,7 +73,7 @@ include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
-include { MULTIQC } from '../modules/nf-core/multiqc/main'
+include { MULTIQC } from './modules/nf-core/multiqc/main'
 
 workflow {
 
@@ -138,6 +138,7 @@ workflow {
 
     // QC the short read alignments with picard and mosdepth
     qc_short_alignments_ch = QC_SHORT_ALIGNMENTS(aligned_to_refs_ch)
+
 
     // TODO: update this so we dynamically check that taxid is indeed bacterial 
     taxid_is_bacterial = true
