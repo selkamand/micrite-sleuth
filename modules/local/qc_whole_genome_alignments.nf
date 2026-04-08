@@ -31,6 +31,7 @@ process QC_WHOLE_GENOME_ALIGNMENTS {
       prefix="\$out/\${base%.paf}"
 
       paftools.js stat "\${paf}" > \${prefix}.stats.tsv
+      # paftools.js asmstat -q 0 -k 10000 -d 0.01 <ref.fai> "\${paf}" > \${prefix}.stats.tsv
     done
 
     """
