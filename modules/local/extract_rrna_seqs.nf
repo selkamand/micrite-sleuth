@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // use barrnap to detect RNA features (inc. 16S/23S rRNA) from de novo assembly 
 process BARRNAP {

@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // Use minimap2 to align short reads to a particular refgenome
 process ALIGN_SHORT_READS_TO_GENOME {

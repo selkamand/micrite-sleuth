@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // Use krakentools to extract all reads classified as the given taxid (including children) 
 // krakentools is single threaded, so don't bother wasting extra cores on this step.

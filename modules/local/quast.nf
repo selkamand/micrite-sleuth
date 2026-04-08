@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // Use quast to get whole genome assembly stats
 process QUAST_WHOLE_GENOME_ASSEMBLY {

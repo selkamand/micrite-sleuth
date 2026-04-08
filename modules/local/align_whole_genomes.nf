@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // Use minimap2 to align de novo assembly to each reference genome
 process ALIGN_WHOLE_GENOMES {

@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // Use fq to substample nreads then convert to fasta to run blast
 process BLASTN {

@@ -1,4 +1,4 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
 
 // use bakta to annotate the genome assembly
 process ANNOTATE_BACTERIAL_GENOME {
