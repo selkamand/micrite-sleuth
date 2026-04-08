@@ -25,3 +25,33 @@ process BLASTN {
     -query  ${fasta}
     """
 }
+
+process BLASTPARSE_RUN {
+
+    container "selkamandcci/blastparse:rocker_0.0.1"
+
+    cpus 1
+
+    ext evalue: "1e-10", pident: 90
+
+    input:
+    tuple val(sampleid), val(taxid), path(fasta)
+
+    output:
+    tuple val(sampleid), val(taxid), path("${sampleid}.taxid_${taxid}.blastn.tsv"), path("${sampleid}.taxid_${taxid}.blastn.config.tsv")
+
+    script:
+    """
+    set -euo pipefail
+
+    Rscript -e 'blastparse::blast_run(
+        query = "${fasta}", 
+        db = "nt", 
+        remote = TRUE,
+        overwrite = TRUE,
+        evalue = "${task.ext.evalue}",
+        perc_identity = ${task.ext.pident},
+        outfile_prefix = "${sampleid}.taxid_${taxid}"
+    )'
+    """
+}

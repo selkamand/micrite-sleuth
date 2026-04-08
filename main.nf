@@ -74,6 +74,8 @@ include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC } from './modules/local/multiqc.nf'
+include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
+
 
 workflow {
 
@@ -164,7 +166,8 @@ workflow {
 
     // Perform blastn
     if (params.run_remote_blastn) {
-        blastn_ch = BLASTN(subsample_for_blastn_ch)
+        // blastn_ch = BLASTN(subsample_for_blastn_ch)
+        blastn_ch = BLASTPARSE_RUN(subsample_for_blastn_ch)
     }
     else {
         blastn_ch = channel.empty()
