@@ -38,7 +38,7 @@ process BLASTPARSE_RUN {
     tuple val(sampleid), val(taxid), path(fasta)
 
     output:
-    tuple val(sampleid), val(taxid), path("${sampleid}.taxid_${taxid}.blastn.tsv"), path("${sampleid}.taxid_${taxid}.blastn.config.tsv")
+    tuple val(sampleid), val(taxid), path("${sampleid}.taxid_${taxid}.blastn.tsv"), path("${sampleid}.taxid_${taxid}.blastn.config.tsv"), path("${sampleid}.taxid_${taxid}.blastn.seqnames.tsv")
 
     script:
     """
