@@ -1,0 +1,23 @@
+
+FROM rhub/r-minimal:4.5.3
+
+# TODO: fix blastparse to specific commit
+RUN installr -c -t "gfortran" selkamand/blastparse
+
+
+ENV BLAST_VERSION=2.13.0
+ENV GLIBC_VERSION=2.35-r0
+
+# Install core tools, add sgerrand glibc, download and install ncbi-blast+
+RUN apk add --no-cache ca-certificates wget tar bash gcompat \
+ && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+ && wget -q "https://github.com/sgerrand/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk" -O /tmp/glibc.apk \
+ && apk add --allow-untrusted /tmp/glibc.apk \
+ && wget -q -O /tmp/ncbi-blast.tar.gz "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/${BLAST_VERSION}/ncbi-blast-${BLAST_VERSION}+-x64-linux.tar.gz" \
+ && tar -xzf /tmp/ncbi-blast.tar.gz -C /opt \
+ && mv /opt/ncbi-blast-${BLAST_VERSION}+/bin/* /usr/local/bin/ \
+ && chmod +x /usr/local/bin/* \
+ && rm -rf /tmp/* /var/cache/apk/*
+
+# quick smoke test at build time (optional)
+RUN blastn -version
