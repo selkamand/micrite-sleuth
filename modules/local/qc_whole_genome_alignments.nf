@@ -1,7 +1,28 @@
-#!/usr/bin/env nexftlow
+#!/usr/bin/env nextflow
+
+
 
 // use paftools to generate whole-genome alignment stats
 process QC_WHOLE_GENOME_ALIGNMENTS {
+    tag "${sampleid}.${taxid}"
+
+    input:
+    tuple val(sampleid), val(taxid), val(ref_id), path(fai), path(paf)
+
+    output:
+    tuple val(sampleid), val(taxid), path("*stats.tsv")
+
+    script:
+    """
+    set -euo pipefail
+    
+      prefix="${sampleid}.${taxid}.${ref_id}"
+      paftools.js stat "${paf}" > \${prefix}.stats.tsv
+      paftools.js asmstat -q 0 -k 10000 -d 0.01 ${fai} ${paf} > \${prefix}.asmstats.tsv
+
+    """
+}
+process QC_WHOLE_GENOME_ALIGNMENTS_OLD {
     tag "${sampleid}.${taxid}"
 
     input:

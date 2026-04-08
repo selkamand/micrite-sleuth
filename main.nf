@@ -251,12 +251,12 @@ workflow {
         // Note assembly_raw channel includes both contigs.fasta AND the whole genome Dir
         assembly_ch = ASSEMBLE(assembly_input_ch)
 
-        // Perform whole-genome alignments
-        whole_genome_alignments_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, refgenomes) }
+        // Perform whole-genome alignments against every refgenome
+        whole_genome_alignments_ch = assembly_ch.contigs.combine(refgenomes_ch)
             | ALIGN_WHOLE_GENOMES
 
         // Compute Stats on whole genome alignments
-        whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch)
+        whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch.full)
 
         // Barrnap 16/23S rRNA extraction from de novo assembly
         barrnap_ch = BARRNAP(assembly_ch.contigs)
@@ -304,7 +304,7 @@ workflow {
     blastn = blastn_ch
     subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
     assembly = assembly_ch.all_results
-    whole_genome_alignments = whole_genome_alignments_ch
+    whole_genome_alignments = whole_genome_alignments_ch.topublish
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
     annotation = annotation_ch
     barrnap = barrnap_ch
@@ -358,11 +358,11 @@ output {
         mode 'copy'
     }
     whole_genome_alignments {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/whole_genome_alignments/"
         mode 'copy'
     }
     whole_genome_alignment_stats {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/whole_genome_alignments/paftools"
         mode 'copy'
     }
     barrnap {

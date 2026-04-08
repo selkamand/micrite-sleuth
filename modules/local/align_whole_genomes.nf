@@ -1,8 +1,31 @@
 #!/usr/bin/env nexftlow
 
 // Use minimap2 to align de novo assembly to each reference genome
-
 process ALIGN_WHOLE_GENOMES {
+
+    // Preset for minimap alignment. See minimap help for -x argument for possible options
+    ext preset: "asm5"
+
+    input:
+    tuple val(sampleid), val(taxid), path(assembly_fasta), val(ref_id), path(ref_fasta), path(ref_fai)
+
+    output:
+    tuple val(sampleid), val(taxid), val(ref_id), path(ref_fai), path("${sampleid}.${taxid}.${ref_id}.paf"), emit: full
+    tuple val(sampleid), val(taxid), val(ref_id), path("${sampleid}.${taxid}.${ref_id}.paf"), emit: topublish
+
+    script:
+    """
+    set -euo pipefail
+
+    prefix="${sampleid}.${taxid}.${ref_id}"
+    echo "Aligning assembly to ${ref_fasta} -> \${prefix}.paf" >&2
+
+    minimap2 -t ${task.cpus} -cx ${task.ext.preset} --cs "${ref_fasta}" "${assembly_fasta}" > "\${prefix}.paf"
+    """
+}
+
+
+process ALIGN_WHOLE_GENOMES_OLD {
 
     // Preset for minimap alignment. See minimap help for -x argument for possible options
     ext preset: "asm5"
