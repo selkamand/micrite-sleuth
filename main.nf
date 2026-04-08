@@ -91,6 +91,35 @@ workflow {
     // When downsampling reads for de novo assembly we should aim for ~30x coverage
     def assembly_target_cov = 30
 
+    // Identify all reference genomes we want to compare with based on 
+    def ref_glob = "${refgenomes}/*.{fa,fna,fasta,fa.gz,fna.gz,fasta.gz}"
+    def ref_paths_ch = channel.fromPath(ref_glob, checkIfExists: true)
+
+    // Define a channel of 3 element tuples. 
+    // 0=reference genome id (from filename), 
+    // 1=reference genome fasta file, 
+    // 2=fai index
+    def refgenomes_ch = ref_paths_ch.map { ref_fasta_path ->
+        def fai = file("${ref_fasta_path}.fai")
+        def ref_name = ref_fasta_path.getFileName().toString()
+        def ref_id = ref_name
+            .replaceFirst(/\.gz$/, '')
+            .replaceFirst(/\.fasta$/, '')
+            .replaceFirst(/\.fna$/, '')
+            .replaceFirst(/\.fa$/, '')
+
+        if (!fai.exists()) {
+            error("Reference genome missing fai index. Please run: `samtools faidx ${ref_fasta_path}` then try again")
+        }
+        tuple(ref_id, ref_fasta_path, fai)
+    }
+    //.view()
+
+    // if (ref_entries.isEmpty()) {
+    // error("No reference FASTA files found at --refgenomes path using glob: ${ref_glob}")
+    //}
+
+
     //Parameter checks
     if (params.run_assembly == false) {
         if (params.run_assembly_annotation) {
@@ -133,16 +162,13 @@ workflow {
     qc_from_taxid_ch = QC_EXTRACTED_READS(reads_from_taxid_ch)
 
     // Align extracted reads to each reference genome in the provided directory
-    align_in_ch = reads_from_taxid_ch.map { sid, tx, fq1, fq2 ->
-        tuple(sid, tx, fq1, fq2, refgenomes)
-    }
-    aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(align_in_ch)
+    aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(reads_from_taxid_ch, refgenomes_ch).view()
 
     // QC the short read alignments with picard and mosdepth
     qc_short_alignments_ch = QC_SHORT_ALIGNMENTS(aligned_to_refs_ch)
 
     // Compile short read alignment qc with multiqc 
-    multiqc_short_alignments_ch = MULTIQC(qc_short_alignments_ch)
+    multiqc_short_alignments_ch = MULTIQC(qc_short_alignments_ch.multiqc)
 
     // TODO: update this so we dynamically check that taxid is indeed bacterial 
     taxid_is_bacterial = true
@@ -185,7 +211,7 @@ workflow {
             // def stats = [total_length: total_length, current_depth: current_depth, subsample_prop: subsample_prop, target_cov: assembly_target_cov]
             tuple(id, taxid, subsample_prop)
         }
-        //.view { v -> "Extracted Read Stats for Downsampling: ${v}" }
+        //.v}iew { v -> "Extracted Read Stats for Downsampling: ${v}" }
 
         // Enrich with actual read paths 
         // Also branch based on wether we have too many / too few reads
@@ -258,7 +284,7 @@ workflow {
     extracted_read_fastqc = qc_from_taxid_ch.fastqc
     extracted_read_seqkit = qc_from_taxid_ch.seqkit
     alignments = aligned_to_refs_ch
-    alignment_stats = qc_short_alignments_ch
+    alignment_stats = qc_short_alignments_ch.multiqc
     alignment_multiqc_report = multiqc_short_alignments_ch.report
     alignment_multiqc_data = multiqc_short_alignments_ch.data
     subsampled_reads_for_blastn = subsample_for_blastn_ch

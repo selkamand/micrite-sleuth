@@ -1,7 +1,7 @@
 #!/usr/bin/env nexftlow
 
 // Use bowtie2 to align short reads to a particular refgenome
-process ALIGN_SHORT_READS_TO_GENOME {
+process ALIGN_SHORT_READS_TO_GENOME_OLD {
     input:
     tuple val(sampleid), val(taxid), path(r1), path(r2), path(refgenomes)
 
@@ -51,5 +51,30 @@ process ALIGN_SHORT_READS_TO_GENOME {
 
     # Optional: manifest file for easy downstream consumption
     ls -1 "\$outdir"/*.sorted.bam > "\$outdir/bams.list"
+    """
+}
+
+// val("${sampleid}.${taxid}.${ref_id}")#,
+process ALIGN_SHORT_READS_TO_GENOME {
+    input:
+    tuple val(sampleid), val(taxid), path(r1), path(r2)
+    tuple val(ref_id), path(ref_fasta), path(ref_fai)
+
+    output:
+    tuple
+    val ([sampleid: "${sampleid}", taxid: "${taxid}", ref_id: "${ref_id}", prefix: "${sampleid}.${taxid}.${ref_id}"]), path("${sampleid}.${taxid}.${ref_id}.sorted.bam"), path("${sampleid}.${taxid}.${ref_id}.sorted.bam.bai")
+
+    script:
+    """
+    set -euo pipefail
+
+
+    echo "Aligning reads to ${ref_fasta} -> ${sampleid}.${taxid}.${ref_id}.sorted.bam" >&2
+    
+    minimap2 -t ${task.cpus} -ax sr "${ref_fasta}" "${r1}" "${r2}" \\
+    | samtools sort -@ ${task.cpus} -o "${sampleid}.${taxid}.${ref_id}.sorted.bam" -
+        
+    samtools index -@ ${task.cpus} "${sampleid}.${taxid}.${ref_id}.sorted.bam"
+
     """
 }
