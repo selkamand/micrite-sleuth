@@ -61,8 +61,7 @@ process ALIGN_SHORT_READS_TO_GENOME {
     tuple val(ref_id), path(ref_fasta), path(ref_fai)
 
     output:
-    tuple
-    val ([sampleid: "${sampleid}", taxid: "${taxid}", ref_id: "${ref_id}", prefix: "${sampleid}.${taxid}.${ref_id}"]), path("${sampleid}.${taxid}.${ref_id}.sorted.bam"), path("${sampleid}.${taxid}.${ref_id}.sorted.bam.bai")
+    tuple val([sampleid: "${sampleid}", taxid: "${taxid}", ref_id: "${ref_id}", prefix: "${sampleid}.${taxid}.${ref_id}"]), path("${sampleid}.${taxid}.${ref_id}.sorted.bam"), path("${sampleid}.${taxid}.${ref_id}.sorted.bam.bai")
 
     script:
     """
