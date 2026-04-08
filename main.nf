@@ -73,7 +73,7 @@ include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
-include { MULTIQC } from './modules/local/multiqc.nf'
+include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
 
 
@@ -154,21 +154,34 @@ workflow {
     }
 
 
-
     // Extract reads that hit taxid (or descendant) 
     reads_from_taxid_ch = EXTRACT_READS_BY_TAXID(channel.of(tuple(sampleid, params.taxid, kraken, kreport, r1, r2)))
 
     // QC the extracted reads
     qc_from_taxid_ch = QC_EXTRACTED_READS(reads_from_taxid_ch)
 
-    // Align extracted reads to each reference genome in the provided directory
-    aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(reads_from_taxid_ch, refgenomes_ch).view()
+    // Create a pairwise combination of every set of extracted reads and every reference genome 
+    // so we can align to each refgenome
+    aligned_input_ch = reads_from_taxid_ch.combine(refgenomes_ch)
 
-    // QC the short read alignments with picard and mosdepth
+    // Align short reads to reference genomes
+    aligned_to_refs_ch = ALIGN_SHORT_READS_TO_GENOME(aligned_input_ch)
+    // def aligned_to_refs_ch = channel.empty()
+
+    // QC the short read alignments with picard and mosdepth (runs once per ref genome)
     qc_short_alignments_ch = QC_SHORT_ALIGNMENTS(aligned_to_refs_ch)
 
-    // Compile short read alignment qc with multiqc 
-    multiqc_short_alignments_ch = MULTIQC(qc_short_alignments_ch.multiqc)
+    // MultiQC should run once per taxid/sample, combining QC outputs from all reference genomes.
+    qc_short_alignments_grouped_for_multiqc_ch = qc_short_alignments_ch.multiqc
+        .map { meta, qc_dir -> tuple(meta.sampleid, meta.taxid, qc_dir) }
+        .groupTuple(by: [0, 1])
+
+    // Compile short read alignment qc with multiqc (runs once per taxid/sample)
+    multiqc_short_alignments_ch = MULTIQC_FILES(
+        qc_short_alignments_grouped_for_multiqc_ch.map { sid, tx, qc_dirs ->
+            tuple(sid, tx, qc_dirs)
+        }
+    )
 
     // TODO: update this so we dynamically check that taxid is indeed bacterial 
     taxid_is_bacterial = true
@@ -232,7 +245,7 @@ workflow {
         full_taxid_reads_for_assembly_ch = stats_for_downsampling_ch.full.map { sid, tx, fq1, fq2, _prop -> tuple(sid, tx, fq1, fq2) }
 
         // Create assembly imput by mixing the two possible channel branches
-        assembly_input_ch = full_taxid_reads_for_assembly_ch.mix(subsampled_reads_for_assembly_ch).view { v -> "Assembly Input: ${v}" }
+        assembly_input_ch = full_taxid_reads_for_assembly_ch.mix(subsampled_reads_for_assembly_ch)
 
         // Create de novo assembly
         // Note assembly_raw channel includes both contigs.fasta AND the whole genome Dir
@@ -283,10 +296,10 @@ workflow {
     extracted_reads = reads_from_taxid_ch
     extracted_read_fastqc = qc_from_taxid_ch.fastqc
     extracted_read_seqkit = qc_from_taxid_ch.seqkit
-    alignments = aligned_to_refs_ch
-    alignment_stats = qc_short_alignments_ch.multiqc
-    alignment_multiqc_report = multiqc_short_alignments_ch.report
-    alignment_multiqc_data = multiqc_short_alignments_ch.data
+    short_read_alignments = aligned_to_refs_ch
+    short_read_alignment_stats = multiqc_short_alignments_ch.stats
+    short_read_alignment_multiqc_report = multiqc_short_alignments_ch.report
+    short_read_alignment_multiqc_data = multiqc_short_alignments_ch.data
     subsampled_reads_for_blastn = subsample_for_blastn_ch
     blastn = blastn_ch
     subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
@@ -312,20 +325,20 @@ output {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/read_stats"
         mode 'copy'
     }
-    alignments {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}"
+    short_read_alignments {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/short_read_alignments"
         mode 'copy'
     }
-    alignment_stats {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}"
+    short_read_alignment_stats {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/short_read_alignments/"
         mode 'copy'
     }
-    alignment_multiqc_report {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}/alignment_stats/multiqc"
+    short_read_alignment_multiqc_report {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/short_read_alignments/multiqc"
         mode 'copy'
     }
-    alignment_multiqc_data {
-        path "${params.outdir}/${params.sampleid}/${params.taxid}/alignment_stats/multiqc"
+    short_read_alignment_multiqc_data {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/short_read_alignments/multiqc"
         mode 'copy'
     }
     subsampled_reads_for_blastn {
