@@ -32,9 +32,12 @@ process QC_SHORT_ALIGNMENTS {
         O="\${outdir}/${meta.prefix}.picard.insert_size_metrics.txt" \\
         H="\${outdir}/${meta.prefix}.picard.insert_size_histogram.pdf"
 
-# mosdepth: fast summaries only
-        mosdepth -t ${task.cpus} -n "\${outdir}/${meta.prefix}" "${bam}"
-# keeps: \${outdir}/${meta.prefix}.mosdepth.summary.txt and \${outdir}/${meta.prefix}.mosdepth.global.dist.txt (and a few small extras)
-
+# mosdepth: fast summaries only 
+# (slowest part will be computing regions.bed.gz which computes coverage every 500bp window)
+        mosdepth --by 500 -t ${task.cpus} -n "\${outdir}/${meta.prefix}" "${bam}"
+# keeps: 
+# \${outdir}/${meta.prefix}.mosdepth.summary.txt
+# \${outdir}/${meta.prefix}.mosdepth.global.dist.txt
+# \${outdir}/${meta.prefix}.mosdepth.regions.bed.gz
     """
 }
