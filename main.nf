@@ -75,7 +75,6 @@ include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportio
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
-include { PREPARE_DGENIES_INDEX } from './modules/local/dgenies.nf'
 
 workflow {
 
