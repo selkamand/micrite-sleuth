@@ -12,6 +12,7 @@ process ALIGN_WHOLE_GENOMES {
     output:
     tuple val(sampleid), val(taxid), val(ref_id), path(ref_fai), path("${sampleid}.${taxid}.${ref_id}.paf"), emit: full
     tuple val(sampleid), val(taxid), val(ref_id), path("${sampleid}.${taxid}.${ref_id}.paf"), emit: topublish
+    tuple val(sampleid), val(taxid), path(ref_fasta), val(ref_id), path(assembly_fasta), path("${sampleid}.${taxid}.${ref_id}.paf"), emit: fordotplots
 
     script:
     """

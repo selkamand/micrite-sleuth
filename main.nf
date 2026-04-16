@@ -66,7 +66,7 @@ include { SUBSAMPLE_FQ } from "./modules/local/subsample.nf"
 include { BLASTN } from "./modules/local/blastn.nf"
 include { ASSEMBLE } from "./modules/local/assemble.nf"
 include { ALIGN_WHOLE_GENOMES } from "./modules/local/align_whole_genomes.nf"
-include { QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
+include { WGA_DOTPLOTS ; QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
 include { ANNOTATE_BACTERIAL_GENOME } from "./modules/local/annotate_bacterial_genome.nf"
 include { BARRNAP } from "./modules/local/extract_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
@@ -114,9 +114,6 @@ workflow {
         tuple(ref_id, ref_fasta_path, fai)
     }
     //.view()
-
-    // Create Dgenies index for reference 
-    dgenies_index_ch = PREPARE_DGENIES_INDEX(refgenomes_ch)
 
     // if (ref_entries.isEmpty()) {
     // error("No reference FASTA files found at --refgenomes path using glob: ${ref_glob}")
@@ -261,6 +258,10 @@ workflow {
         // Compute Stats on whole genome alignments
         whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch.full)
 
+
+        // Run Dgenies on de novo assembly whole-genome alignments
+        ch_dgenies = WGA_DOTPLOTS(whole_genome_alignments_ch.fordotplots)
+
         // Barrnap 16/23S rRNA extraction from de novo assembly
         barrnap_ch = BARRNAP(assembly_ch.contigs)
 
@@ -313,7 +314,7 @@ workflow {
     barrnap = barrnap_ch
     quast = quast_ch
     busco = busco_ch
-    dgenies_index = dgenies_index_ch
+    dgenies = ch_dgenies
 }
 
 output {
@@ -385,7 +386,7 @@ output {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/"
         mode 'copy'
     }
-    dgenies_index {
+    dgenies {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/whole_genome_alignments/dgenies"
         mode 'copy'
     }

@@ -22,38 +22,30 @@ process QC_WHOLE_GENOME_ALIGNMENTS {
 
     """
 }
-process QC_WHOLE_GENOME_ALIGNMENTS_OLD {
+
+
+// Generate Dgenies index files 
+process WGA_DOTPLOTS {
     tag "${sampleid}.${taxid}"
+    container "selkamandcci/dgenies:0.0.1"
 
     input:
-    tuple val(sampleid), val(taxid), path(alndir)
+    tuple val(sampleid), val(taxid), path(ref_fasta), val(ref_id), path(assembly_fasta), path(paf)
 
     output:
-    tuple val(sampleid), val(taxid), path("whole_genome_alignment_stats")
+    tuple val(sampleid), val(taxid), path("${ref_id}.dgenies.idx"), path("${sampleid}.${taxid}.dgenies.idx")
 
     script:
     """
     set -euo pipefail
-
-    out="whole_genome_alignment_stats"
-    mkdir -p "\$out"
-
-    shopt -s nullglob
-
-    pafs=( "${alndir}"/*.paf )
-
-    if (( \${#pafs[@]} == 0 )); then
-      echo "ERROR: No *paf files found in: ${alndir}" >&2
-      exit 1
-    fi
-
-    for paf in "\${pafs[@]}"; do
-      base=\$(basename "\$paf")
-      prefix="\$out/\${base%.paf}"
-
-      paftools.js stat "\${paf}" > \${prefix}.stats.tsv
-      # paftools.js asmstat -q 0 -k 10000 -d 0.01 <ref.fai> "\${paf}" > \${prefix}.stats.tsv
-    done
-
+   
+    # Index Reference Fasta 
+    index_fasta.py -i "${ref_fasta}" -n ${ref_id} -o ${ref_id}.dgenies.idx
+    
+    # Index Query Fasta
+    index_fasta.py -i "${assembly_fasta}" -n "${sampleid}.${taxid}" -o "${sampleid}.${taxid}.dgenies.idx"
+    
+    # Run Dgenies on PAF 
+    # TODO: run standalone dgenies locally
     """
 }
