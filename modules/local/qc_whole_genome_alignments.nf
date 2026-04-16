@@ -33,7 +33,7 @@ process WGA_DOTPLOTS {
     tuple val(sampleid), val(taxid), path(ref_fasta), val(ref_id), path(assembly_fasta), path(paf)
 
     output:
-    tuple val(sampleid), val(taxid), path("${ref_id}.dgenies.idx"), path("${sampleid}.${taxid}.dgenies.idx")
+    tuple val(sampleid), val(taxid), path("${ref_id}.dgenies.idx"), path("${sampleid}.${taxid}.denovo_assembly.dgenies.idx")
 
     script:
     """
@@ -43,7 +43,7 @@ process WGA_DOTPLOTS {
     index_fasta.py -i "${ref_fasta}" -n ${ref_id} -o ${ref_id}.dgenies.idx
     
     # Index Query Fasta
-    index_fasta.py -i "${assembly_fasta}" -n "${sampleid}.${taxid}" -o "${sampleid}.${taxid}.dgenies.idx"
+    index_fasta.py -i "${assembly_fasta}" -n "${sampleid}.${taxid}" -o "${sampleid}.${taxid}.denovo_assembly.dgenies.idx"
     
     # Run Dgenies on PAF 
     # TODO: run standalone dgenies locally
