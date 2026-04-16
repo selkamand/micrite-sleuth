@@ -75,7 +75,7 @@ include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportio
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
-
+include { PREPARE_DGENIES_INDEX } from './modules/local/dgenies.nf'
 
 workflow {
 
@@ -114,6 +114,9 @@ workflow {
         tuple(ref_id, ref_fasta_path, fai)
     }
     //.view()
+
+    // Create Dgenies index for reference 
+    dgenies_index_ch = PREPARE_DGENIES_INDEX(refgenomes_ch)
 
     // if (ref_entries.isEmpty()) {
     // error("No reference FASTA files found at --refgenomes path using glob: ${ref_glob}")
@@ -310,6 +313,7 @@ workflow {
     barrnap = barrnap_ch
     quast = quast_ch
     busco = busco_ch
+    dgenies_index = dgenies_index_ch
 }
 
 output {
@@ -379,6 +383,10 @@ output {
     }
     busco {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        mode 'copy'
+    }
+    dgenies_index {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/whole_genome_alignments/dgenies"
         mode 'copy'
     }
 }
