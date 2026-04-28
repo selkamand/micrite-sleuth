@@ -45,7 +45,7 @@ process WGA_DOTPLOTS {
     # Index Query Fasta
     index_fasta.py -i "${assembly_fasta}" -n "${sampleid}.${taxid}" -o "${sampleid}.${taxid}.denovo_assembly.dgenies.idx"
     
-    # Run Dgenies on PAF 
-    # TODO: run standalone dgenies locally
+# We do NOT actually create the dgenies dot-plot as it involves starting a web server. 
+# We just create the indexes so users can easily build dotplots with their own dgenies instance (or online app)
     """
 }
