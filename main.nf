@@ -42,6 +42,7 @@ params {
     // Path to bakta database directory
     bakta_database: Path? = null
 
+
     // What size would we expect the genome size to be 
     // (used in quast QC NG50 calculations and subsampling reads to ~30X coverage ahead of assembly)
     genome_size_guess: Integer
@@ -53,6 +54,9 @@ params {
     run_busco: Boolean = false
     busco_lineage: String?
     busco_dataset: Path?
+
+    // Silva 16s arb database. Used to classify any 16S rRNA sequences extracted by barrnap 
+    arb_16s: Path
 
     // output directory
     outdir: Path = "micritesleuth"
@@ -69,6 +73,7 @@ include { ALIGN_WHOLE_GENOMES } from "./modules/local/align_whole_genomes.nf"
 include { WGA_DOTPLOTS ; QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
 include { ANNOTATE_BACTERIAL_GENOME } from "./modules/local/annotate_bacterial_genome.nf"
 include { BARRNAP ; SPLIT_RRNA_FASTA } from "./modules/local/extract_rrna_seqs.nf"
+include { SINA_SEARCH_AND_CLASSIFY } from "./modules/local/classify_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
@@ -87,6 +92,7 @@ workflow {
     def sampleid = params.sampleid
     def refgenomes = file(params.refgenomes)
     def bakta_database = params.bakta_database != null ? file(params.bakta_database) : null
+    def arb_16s = file(params.arb_16s)
 
     // When downsampling reads for de novo assembly we should aim for ~30x coverage
     def assembly_target_cov = 30
@@ -269,6 +275,7 @@ workflow {
         rrna_sequences_ch = SPLIT_RRNA_FASTA(barrnap_ch)
 
         // Classify 16S sequence against SINA database
+        sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.SSU_16S, arb_16s)
 
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
@@ -320,6 +327,7 @@ workflow {
     ssu_16s = rrna_sequences_ch.SSU_16S
     lsu_23s = rrna_sequences_ch.LSU_23S
     lsu_5s = rrna_sequences_ch.LSU_5S
+    sina_classified_16s = sina_classified_16s_ch.all
     quast = quast_ch
     busco = busco_ch
     dgenies = ch_dgenies
@@ -392,6 +400,10 @@ output {
     }
     lsu_5s {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/lsu_5s"
+        mode 'copy'
+    }
+    sina_classified_16s {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/ssu_16s"
         mode 'copy'
     }
     annotation {
