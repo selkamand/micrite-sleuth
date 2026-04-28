@@ -68,13 +68,14 @@ include { ASSEMBLE } from "./modules/local/assemble.nf"
 include { ALIGN_WHOLE_GENOMES } from "./modules/local/align_whole_genomes.nf"
 include { WGA_DOTPLOTS ; QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
 include { ANNOTATE_BACTERIAL_GENOME } from "./modules/local/annotate_bacterial_genome.nf"
-include { BARRNAP } from "./modules/local/extract_rrna_seqs.nf"
+include { BARRNAP ; SPLIT_RRNA_FASTA } from "./modules/local/extract_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
+
 
 workflow {
 
@@ -264,6 +265,11 @@ workflow {
         // Barrnap 16/23S rRNA extraction from de novo assembly
         barrnap_ch = BARRNAP(assembly_ch.contigs)
 
+        // Split barrnap rRNAs to individual fastqs for small and large subunut components 
+        rrna_sequences_ch = SPLIT_RRNA_FASTA(barrnap_ch)
+
+        // Classify 16S sequence against SINA database
+
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
             tuple(
@@ -311,6 +317,9 @@ workflow {
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
     annotation = annotation_ch
     barrnap = barrnap_ch
+    ssu_16s = rrna_sequences_ch.SSU_16S
+    lsu_23s = rrna_sequences_ch.LSU_23S
+    lsu_5s = rrna_sequences_ch.LSU_5S
     quast = quast_ch
     busco = busco_ch
     dgenies = ch_dgenies
@@ -371,6 +380,18 @@ output {
     }
     barrnap {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/"
+        mode 'copy'
+    }
+    ssu_16s {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/ssu_16s"
+        mode 'copy'
+    }
+    lsu_23s {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/lsu_23s"
+        mode 'copy'
+    }
+    lsu_5s {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/barrnap/lsu_5s"
         mode 'copy'
     }
     annotation {
