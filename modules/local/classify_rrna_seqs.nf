@@ -38,6 +38,6 @@ process SINA_SEARCH_AND_CLASSIFY {
     # Since sina adds sequences to a large refrence msa alignment the final MSA can have loads of gaps.
     # We remove columns which represent gaps across all sequences in the msa (input seq + neighbours). 
     # This trimmed msa is what should be input into pairwise-distance calculation and tree-construction tools
-    trimAl -noallgaps -in ${sampleid}.${taxid}.sina.search.fasta -out ${sampleid}.${taxid}.sina.search.trimmed.fasta
+    trimal -noallgaps -in ${sampleid}.${taxid}.sina.search.fasta -out ${sampleid}.${taxid}.sina.search.trimmed.fasta
     """
 }
