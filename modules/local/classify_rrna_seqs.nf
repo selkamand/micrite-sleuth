@@ -16,7 +16,7 @@ process SINA_SEARCH_AND_CLASSIFY {
     tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.csv"), emit: searchcsv
     tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.fasta"), emit: searchfasta
     tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.fasta"), emit: trimmed
-    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.csv"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.fasta"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.csv"), emit: all
+    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.csv"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.fasta"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.fasta"), emit: all
 
     script:
     """
