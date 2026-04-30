@@ -42,7 +42,6 @@ params {
     // Path to bakta database directory
     bakta_database: Path? = null
 
-
     // What size would we expect the genome size to be 
     // (used in quast QC NG50 calculations and subsampling reads to ~30X coverage ahead of assembly)
     genome_size_guess: Integer
