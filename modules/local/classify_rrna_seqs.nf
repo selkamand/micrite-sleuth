@@ -10,6 +10,7 @@ process SINA_SEARCH_AND_CLASSIFY {
     input:
     tuple val(sampleid), val(taxid), path(rrna_fasta)
     path silva_arb_database
+    path silva_arb_index
     val rrna_type
 
     output:

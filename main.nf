@@ -58,6 +58,10 @@ params {
     arb_16s: Path
     arb_23s: Path
 
+    // Expect the silva database to be indexed, and their .sidx files supplied
+    arb_16s_sidx: Path
+    arb_23s_sidx: Path
+
     // output directory
     outdir: Path = "micritesleuth"
 }
@@ -94,6 +98,8 @@ workflow {
     def bakta_database = params.bakta_database != null ? file(params.bakta_database) : null
     def arb_16s = file(params.arb_16s)
     def arb_23s = file(params.arb_23s)
+    def arb_16s_sidx = file(params.arb_16s_sidx)
+    def arb_23s_sidx = file(params.arb_23s_sidx)
 
     // When downsampling reads for de novo assembly we should aim for ~30x coverage
     def assembly_target_cov = 30
@@ -276,8 +282,8 @@ workflow {
         rrna_sequences_ch = SPLIT_RRNA_FASTA(barrnap_ch)
 
         // Classify 16S sequence against SINA database
-        sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, "16S")
-        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY_LSU(rrna_sequences_ch.LSU_23S, arb_23s, "23S")
+        sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, arb_16s_sidx, "16S")
+        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY_LSU(rrna_sequences_ch.LSU_23S, arb_23s, arb_23s_sidx, "23S")
 
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
