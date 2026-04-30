@@ -277,7 +277,7 @@ workflow {
 
         // Classify 16S sequence against SINA database
         sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.SSU_16S, arb_16s, "16S")
-        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.SSU_23S, arb_23s, "23S")
+        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.LSU_23S, arb_23s, "23S")
 
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
