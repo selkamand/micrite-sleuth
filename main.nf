@@ -73,7 +73,7 @@ include { ALIGN_WHOLE_GENOMES } from "./modules/local/align_whole_genomes.nf"
 include { WGA_DOTPLOTS ; QC_WHOLE_GENOME_ALIGNMENTS } from "./modules/local/qc_whole_genome_alignments.nf"
 include { ANNOTATE_BACTERIAL_GENOME } from "./modules/local/annotate_bacterial_genome.nf"
 include { BARRNAP ; SPLIT_RRNA_FASTA } from "./modules/local/extract_rrna_seqs.nf"
-include { SINA_SEARCH_AND_CLASSIFY } from "./modules/local/classify_rrna_seqs.nf"
+include { SINA_SEARCH_AND_CLASSIFY as SINA_SEARCH_AND_CLASSIFY_SSU ; SINA_SEARCH_AND_CLASSIFY as SINA_SEARCH_AND_CLASSIFY_LSU } from "./modules/local/classify_rrna_seqs.nf"
 include { QUAST_WHOLE_GENOME_ASSEMBLY } from "./modules/local/quast.nf"
 include { COUNT_TOTAL_BASES } from "./modules/local/parse_seqkit_stats.nf"
 include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportion.nf"
@@ -276,8 +276,8 @@ workflow {
         rrna_sequences_ch = SPLIT_RRNA_FASTA(barrnap_ch)
 
         // Classify 16S sequence against SINA database
-        sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.SSU_16S, arb_16s, "16S")
-        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY(rrna_sequences_ch.LSU_23S, arb_23s, "23S")
+        sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, "16S")
+        sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY_LSU(rrna_sequences_ch.LSU_23S, arb_23s, "23S")
 
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
