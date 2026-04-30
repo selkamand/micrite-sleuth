@@ -1,0 +1,16 @@
+# KrakenUniq v1.0.4 DATE:2026-04-30T04:37:38Z DB:./kuniq_microbialdb_minus_kdb.20230808 DB_SIZE:574314927784 WD:/media/storage/selkamand/microbes/testfileprep/work/26/2959f7c4d173d2153b1c3c0f3e4ee4
+# CL:/opt/krakenuniq/krakenuniq --paired --preload-size 192G --threads 6 --db kuniq_microbialdb_minus_kdb.20230808 --report ecoli_rrna.krakenuniq.report.txt --output ecoli_rrna.kout.txt ecoli_rrna.host_depleted.R1.fq.gz ecoli_rrna.host_depleted.R2.fq.gz
+%	reads	taxReads	kmers	dup	cov	taxID	rank	taxName
+100	85	0	4729	4.09	9.909e-08	1	no rank	root
+87.06	74	0	3778	4.3	0.001021	2787854	no rank	  other entries
+87.06	74	0	3778	4.3	0.001021	28384	no rank	    other sequences
+87.06	74	0	3778	4.3	0.001021	81077	no rank	      artificial sequences
+87.06	74	74	3778	4.3	0.001021	32630	species	        synthetic construct
+12.94	11	0	932	3.29	1.967e-08	131567	no rank	  cellular organisms
+12.94	11	0	932	3.29	2.627e-08	2	superkingdom	    Bacteria
+12.94	11	0	820	3.15	5.01e-08	1224	phylum	      Pseudomonadota
+12.94	11	0	795	3.16	9.352e-08	1236	class	        Gammaproteobacteria
+12.94	11	2	690	3.28	3.299e-07	91347	order	          Enterobacterales
+10.59	9	7	563	3.37	5.399e-07	543	family	            Enterobacteriaceae
+2.353	2	0	165	2.24	1.482e-06	561	genus	              Escherichia
+2.353	2	2	164	2.25	2.318e-06	562	species	                Escherichia coli

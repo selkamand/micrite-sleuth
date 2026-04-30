@@ -1,0 +1,8 @@
+74	s__synthetic_construct
+0	k__Bacteria
+0	k__Bacteria	p__Pseudomonadota
+0	k__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria
+2	k__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales
+7	k__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae
+0	k__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia
+2	k__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia_coli
