@@ -5,16 +5,18 @@
 process SINA_SEARCH_AND_CLASSIFY {
 
     container "community.wave.seqera.io/library/sina_trimal:0983aef64094b81d"
+    tag "${rrna_type}"
 
     input:
-    tuple val(sampleid), val(taxid), path(fasta_16s)
+    tuple val(sampleid), val(taxid), path(rrna_fasta)
     path silva_arb_database
+    val rrna_type
 
     output:
-    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.sina.search.csv"), emit: searchcsv
-    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.sina.search.fasta"), emit: searchfasta
-    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.sina.search.trimmed.fasta"), emit: trimmed
-    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.sina.search.csv"), path("${sampleid}.${taxid}.sina.search.fasta"), path("${sampleid}.${taxid}.sina.search.csv"), emit: all
+    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.csv"), emit: searchcsv
+    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.fasta"), emit: searchfasta
+    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.fasta"), emit: trimmed
+    tuple val(sampleid), val(taxid), path("${sampleid}.${taxid}.${rrna_type}.sina.search.csv"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.fasta"), path("${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.csv"), emit: all
 
     script:
     """
@@ -29,15 +31,15 @@ process SINA_SEARCH_AND_CLASSIFY {
     # Search and classify. Each result sequence must have at least 90% fractional identity with query
     # We will only return 10 search results per query sequence (from the 10 most similar seqs)
     sina --search \
-    -i ${fasta_16s} -r ${silva_arb_database} \
+    -i ${rrna_fasta} -r ${silva_arb_database} \
     --add-relatives 10 --overhang remove \
     --search-min-sim 0.90 --search-max-result 10 --lca-fields tax_gtdb \
-    -o ${sampleid}.${taxid}.sina.search.fasta \
-    -o ${sampleid}.${taxid}.sina.search.csv 
+    -o ${sampleid}.${taxid}.${rrna_type}.sina.search.fasta \
+    -o ${sampleid}.${taxid}.${rrna_type}.sina.search.csv 
 
     # Since sina adds sequences to a large refrence msa alignment the final MSA can have loads of gaps.
     # We remove columns which represent gaps across all sequences in the msa (input seq + neighbours). 
     # This trimmed msa is what should be input into pairwise-distance calculation and tree-construction tools
-    trimal -noallgaps -in ${sampleid}.${taxid}.sina.search.fasta -out ${sampleid}.${taxid}.sina.search.trimmed.fasta
+    trimal -noallgaps -in ${sampleid}.${taxid}.${rrna_type}.sina.search.fasta -out ${sampleid}.${taxid}.${rrna_type}.sina.search.trimmed.fasta
     """
 }
