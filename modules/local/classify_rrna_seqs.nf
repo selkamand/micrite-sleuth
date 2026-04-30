@@ -4,7 +4,7 @@
 // Note FASTA 16S should be a fasta with a single 16s sequence
 process SINA_SEARCH_AND_CLASSIFY {
 
-    container "community.wave.seqera.io/library/sina:1.7.2--322a08ea99ba083b"
+    container "community.wave.seqera.io/library/sina_trimal:0983aef64094b81d"
 
     input:
     tuple val(sampleid), val(taxid), path(fasta_16s)
