@@ -13,7 +13,7 @@ process ANNOTATE_BACTERIAL_GENOME {
 
     output:
     tuple val(sampleid), val(taxid), path("annotation"), emit: all
-    tuple val(sampleid), val(taxid), path("annotation/*.fna"), path("annotation/*.gff3"), path("annotation/*.faa"), emit: annotations
+    tuple val(sampleid), val(taxid), path("annotation/*.fna"), path("annotation/*.gff3"), path("annotation/${assembly_fasta.baseName}.faa"), emit: annotations
 
     script:
     """
