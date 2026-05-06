@@ -66,7 +66,7 @@ params {
     arb_23s_sidx: Path
 
     // output directory
-    outdir: Path = "micritesleuth"
+    outdir: String = "micritesleuth"
 }
 
 include { EXTRACT_READS_BY_TAXID } from "./modules/local/krakentools.nf"
@@ -207,8 +207,9 @@ workflow {
     subsample_for_blastn_ch = channel.empty()
     blastn_ch = channel.empty()
     assembly_ch = channel.empty()
-    annotation_ch = channel.empty()
+    annotation_out_ch = channel.empty()
     quast_ch = channel.empty()
+    amrfinder_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -301,9 +302,9 @@ workflow {
         quast_ch = QUAST_WHOLE_GENOME_ASSEMBLY(quast_in)
 
         // Annotate genome with BAKTA
-        annotation_ch = channel.empty()
         if (params.run_assembly_annotation && taxid_is_bacterial) {
             annotation_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) } | ANNOTATE_BACTERIAL_GENOME
+            annotation_out_ch = annotation_ch.all
 
             // Run AMRfinder (automatically use bakta database amrfinderplus-db)
             amrfinder_database = file("${bakta_database}/amrfinderplus-db/latest/")
@@ -336,7 +337,7 @@ workflow {
     assembly = assembly_ch.all_results
     whole_genome_alignments = whole_genome_alignments_ch.topublish
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
-    annotation = annotation_ch.all
+    annotation = annotation_out_ch
     amrfinder = amrfinder_ch
     barrnap = barrnap_ch
     ssu_16s = rrna_sequences_ch.SSU_16S
