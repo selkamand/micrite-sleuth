@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+// nextflow.enable.types = false
+
 params {
 
     // sample identifier
@@ -54,6 +56,7 @@ params {
     busco_lineage: String?
     busco_dataset: Path?
 
+
     // Silva ribosomal RNA databases. Used to classify any 16S/23S rRNA sequences extracted by barrnap
     arb_16s: Path
     arb_23s: Path
@@ -84,6 +87,7 @@ include { SUBSAMPLE_BY_PROPORTION } from "./modules/local/subsample_by_proportio
 include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
+include { AMRFINDER } from './modules/local/amrfinderplus.nf'
 
 
 workflow {
@@ -213,8 +217,7 @@ workflow {
     def nreads = params.blastn_reads
 
     // Perform subsampling
-    subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) }
-        | SUBSAMPLE_FQ
+    subsample_for_blastn_ch = reads_from_taxid_ch.map { sid, tx, fq1, _fq2 -> tuple(sid, tx, fq1, nreads) } | SUBSAMPLE_FQ
 
     // Perform blastn
     if (params.run_remote_blastn) {
@@ -265,8 +268,7 @@ workflow {
         assembly_ch = ASSEMBLE(assembly_input_ch)
 
         // Perform whole-genome alignments against every refgenome
-        whole_genome_alignments_ch = assembly_ch.contigs.combine(refgenomes_ch)
-            | ALIGN_WHOLE_GENOMES
+        whole_genome_alignments_ch = assembly_ch.contigs.combine(refgenomes_ch) | ALIGN_WHOLE_GENOMES
 
         // Compute Stats on whole genome alignments
         whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch.full)
@@ -299,12 +301,16 @@ workflow {
         quast_ch = QUAST_WHOLE_GENOME_ASSEMBLY(quast_in)
 
         // Annotate genome with BAKTA
-        if (params.run_assembly_annotation & taxid_is_bacterial) {
-            annotation_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) }
-                | ANNOTATE_BACTERIAL_GENOME
-        }
-        else {
-            annotation_ch = channel.empty()
+        annotation_ch = channel.empty()
+        if (params.run_assembly_annotation && taxid_is_bacterial) {
+            annotation_ch = assembly_ch.contigs.map { sid, tx, assembly_fasta -> tuple(sid, tx, assembly_fasta, bakta_database) } | ANNOTATE_BACTERIAL_GENOME
+
+            // Run AMRfinder (automatically use bakta database amrfinderplus-db)
+            amrfinder_database = file("${bakta_database}/amrfinderplus-db/latest/")
+            if (!amrfinder_database.exists()) {
+                error("Failed to find an amrfinderplus database in your bakta database")
+            }
+            amrfinder_ch = AMRFINDER(annotation_ch.annotations, amrfinder_database)
         }
 
         // BUSCO completeness
@@ -330,7 +336,8 @@ workflow {
     assembly = assembly_ch.all_results
     whole_genome_alignments = whole_genome_alignments_ch.topublish
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
-    annotation = annotation_ch
+    annotation = annotation_ch.all
+    amrfinder = amrfinder_ch
     barrnap = barrnap_ch
     ssu_16s = rrna_sequences_ch.SSU_16S
     lsu_23s = rrna_sequences_ch.LSU_23S
@@ -420,6 +427,10 @@ output {
         mode 'copy'
     }
     annotation {
+        path "${params.outdir}/${params.sampleid}/${params.taxid}/"
+        mode 'copy'
+    }
+    amrfinder {
         path "${params.outdir}/${params.sampleid}/${params.taxid}/"
         mode 'copy'
     }

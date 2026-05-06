@@ -6,7 +6,7 @@ process AMRFINDER {
     cpus 1
 
     input:
-    tuple val(sampleid), val(taxid), path(fna), path(faa), path(gff3)
+    tuple val(sampleid), val(taxid), path(fna), path(gff3), path(faa)
     path database
 
     output:

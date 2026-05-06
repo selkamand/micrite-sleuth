@@ -1,5 +1,8 @@
 #!/usr/bin/env nextflow
 
+// nextflow.enable.types = true
+
+
 // use bakta to annotate the genome assembly
 process ANNOTATE_BACTERIAL_GENOME {
 
@@ -9,7 +12,8 @@ process ANNOTATE_BACTERIAL_GENOME {
     tuple val(sampleid), val(taxid), path(assembly_fasta), path(bakta_db)
 
     output:
-    tuple val(sampleid), val(taxid), path("annotation"), path("annotation/*.gff3")
+    tuple val(sampleid), val(taxid), path("annotation"), emit: all
+    tuple val(sampleid), val(taxid), path("annotation/*.fna"), path("annotation/*.gff3"), path("annotation/*.faa"), emit: annotations
 
     script:
     """
