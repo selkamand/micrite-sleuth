@@ -209,11 +209,14 @@ workflow {
     // Initialize optional outputs as empty channels
     subsample_for_blastn_ch = channel.empty()
     blastn_ch = channel.empty()
-    assembly_ch = channel.empty()
+    assembly_output_ch = channel.empty()
     annotation_out_ch = channel.empty()
     quast_ch = channel.empty()
     amrfinder_ch = channel.empty()
     subsampled_reads_for_assembly_ch = channel.empty()
+    ssu_16s_output_ch = channel.empty()
+    lsu_23s_output_ch = channel.empty()
+    lsu_5s_output_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -271,7 +274,7 @@ workflow {
         // Create de novo assembly
         // Note assembly_raw channel includes both contigs.fasta AND the whole genome Dir
         assembly_ch = ASSEMBLE(assembly_input_ch)
-
+        assembly_output_ch = assembly_ch.all_results
         // Perform whole-genome alignments against every refgenome
         whole_genome_alignments_ch = assembly_ch.contigs.combine(refgenomes_ch) | ALIGN_WHOLE_GENOMES
 
@@ -287,6 +290,11 @@ workflow {
 
         // Split barrnap rRNAs to individual fastqs for small and large subunut components 
         rrna_sequences_ch = SPLIT_RRNA_FASTA(barrnap_ch)
+
+        // Set output chanels
+        ssu_16s_output_ch = rrna_sequences_ch.SSU_16S
+        lsu_23s_output_ch = rrna_sequences_ch.LSU_23S
+        lsu_5s_output_ch = rrna_sequences_ch.lsu_5S
 
         // Classify 16S sequence against SINA database
         sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, arb_16s_sidx, "16S")
@@ -344,15 +352,15 @@ workflow {
     subsampled_reads_for_blastn = subsample_for_blastn_ch
     blastn = blastn_ch
     subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
-    assembly = assembly_ch.all_results
+    assembly = assembly_output_ch
     whole_genome_alignments = whole_genome_alignments_ch.topublish
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
     annotation = annotation_out_ch
     amrfinder = amrfinder_ch
     barrnap = barrnap_ch
-    ssu_16s = rrna_sequences_ch.SSU_16S
-    lsu_23s = rrna_sequences_ch.LSU_23S
-    lsu_5s = rrna_sequences_ch.LSU_5S
+    ssu_16s = ssu_16s_output_ch
+    lsu_23s = lsu_23s_output_ch
+    lsu_5s = lsu_5s_output_ch
     sina_classified_16s = sina_classified_16s_ch.all
     sina_classified_23s = sina_classified_23s_ch.all
     quast = quast_ch
