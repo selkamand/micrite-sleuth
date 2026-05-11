@@ -35,7 +35,7 @@ params {
     blastn_reads: Integer = 200
 
     // Run de novo assembly
-    run_assembly: Boolean = true
+    run_assemby: Boolean = true
     skip_pre_assembly_downsampling: Boolean = false
 
     // Run bacterial genome annotation
@@ -56,6 +56,8 @@ params {
     busco_lineage: String?
     busco_dataset: Path?
 
+    // Multilocus Sequence Typing 
+    mlst_database: Path? = null
 
     // Silva ribosomal RNA databases. Used to classify any 16S/23S rRNA sequences extracted by barrnap
     arb_16s: Path
@@ -88,7 +90,7 @@ include { BUSCO_COMPLETENESS } from "./modules/local/busco.nf"
 include { MULTIQC_FILES } from './modules/local/multiqc.nf'
 include { BLASTPARSE_RUN } from './modules/local/blastn.nf'
 include { AMRFINDER } from './modules/local/amrfinderplus.nf'
-
+include { PUBMLST } from './modules/local/pubmlst.nf'
 
 workflow {
 
@@ -104,6 +106,7 @@ workflow {
     def arb_23s = file(params.arb_23s)
     def arb_16s_sidx = file(params.arb_16s_sidx)
     def arb_23s_sidx = file(params.arb_23s_sidx)
+    def mlst_database = params.mlst_database != null ? file(params.mlst_database) : null
 
     // When downsampling reads for de novo assembly we should aim for ~30x coverage
     def assembly_target_cov = 30
@@ -210,6 +213,7 @@ workflow {
     annotation_out_ch = channel.empty()
     quast_ch = channel.empty()
     amrfinder_ch = channel.empty()
+    subsampled_reads_for_assembly_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -314,12 +318,18 @@ workflow {
             amrfinder_ch = AMRFINDER(annotation_ch.annotations, amrfinder_database)
         }
 
+
         // BUSCO completeness
         if (params.run_busco) {
             busco_ch = BUSCO_COMPLETENESS(assembly_ch.contigs, params.busco_lineage, busco_dataset)
         }
         else {
             busco_ch = channel.empty()
+        }
+
+        // Run pubMLST if MLST database is supplied
+        if (mlst_database != null) {
+            log.info("Running ribosomal multi locus sequence typing with pubMLST since mlst_database is supplied")
         }
     }
 
