@@ -35,7 +35,7 @@ params {
     blastn_reads: Integer = 200
 
     // Run de novo assembly
-    run_assemby: Boolean = true
+    run_assembly: Boolean = true
     skip_pre_assembly_downsampling: Boolean = false
 
     // Run bacterial genome annotation
