@@ -217,6 +217,8 @@ workflow {
     ssu_16s_output_ch = channel.empty()
     lsu_23s_output_ch = channel.empty()
     lsu_5s_output_ch = channel.empty()
+    whole_genome_alignments_output_ch = channel.empty()
+    whole_genome_alignment_stats_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -277,6 +279,7 @@ workflow {
         assembly_output_ch = assembly_ch.all_results
         // Perform whole-genome alignments against every refgenome
         whole_genome_alignments_ch = assembly_ch.contigs.combine(refgenomes_ch) | ALIGN_WHOLE_GENOMES
+        whole_genome_alignments_output_ch = whole_genome_alignments_ch.topublish
 
         // Compute Stats on whole genome alignments
         whole_genome_alignment_stats_ch = QC_WHOLE_GENOME_ALIGNMENTS(whole_genome_alignments_ch.full)
@@ -353,7 +356,7 @@ workflow {
     blastn = blastn_ch
     subsampled_reads_for_assembly = subsampled_reads_for_assembly_ch
     assembly = assembly_output_ch
-    whole_genome_alignments = whole_genome_alignments_ch.topublish
+    whole_genome_alignments = whole_genome_alignments_output_ch
     whole_genome_alignment_stats = whole_genome_alignment_stats_ch
     annotation = annotation_out_ch
     amrfinder = amrfinder_ch
