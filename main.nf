@@ -222,6 +222,7 @@ workflow {
     whole_genome_alignments_output_ch = channel.empty()
     whole_genome_alignment_stats_ch = channel.empty()
     barrnap_ch = channel.empty()
+    busco_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -339,9 +340,6 @@ workflow {
         // BUSCO completeness
         if (params.run_busco) {
             busco_ch = BUSCO_COMPLETENESS(assembly_ch.contigs, params.busco_lineage, busco_dataset)
-        }
-        else {
-            busco_ch = channel.empty()
         }
 
         // Run pubMLST if MLST database is supplied
