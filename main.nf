@@ -217,6 +217,8 @@ workflow {
     ssu_16s_output_ch = channel.empty()
     lsu_23s_output_ch = channel.empty()
     lsu_5s_output_ch = channel.empty()
+    sina_classified_16s_output_ch = channel.empty()
+    sina_classified_23s_output_ch = channel.empty()
     whole_genome_alignments_output_ch = channel.empty()
     whole_genome_alignment_stats_ch = channel.empty()
     barrnap_ch = channel.empty()
@@ -304,6 +306,9 @@ workflow {
         sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, arb_16s_sidx, "16S")
         sina_classified_23s_ch = SINA_SEARCH_AND_CLASSIFY_LSU(rrna_sequences_ch.LSU_23S, arb_23s, arb_23s_sidx, "23S")
 
+        sina_classified_16s_output_ch = sina_classified_16s_ch.all
+        sina_classified_23s_output_ch = sina_classified_23s_ch.all
+
         // Run QUAST QC on de novo assembly.
         quast_in = assembly_ch.contigs.map { sid, tx, assembly_fasta ->
             tuple(
@@ -365,8 +370,8 @@ workflow {
     ssu_16s = ssu_16s_output_ch
     lsu_23s = lsu_23s_output_ch
     lsu_5s = lsu_5s_output_ch
-    sina_classified_16s = sina_classified_16s_ch.all
-    sina_classified_23s = sina_classified_23s_ch.all
+    sina_classified_16s = sina_classified_16s_output_ch
+    sina_classified_23s = sina_classified_23s_output_ch
     quast = quast_ch
     busco = busco_ch
     dgenies = ch_dgenies
