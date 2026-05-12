@@ -219,6 +219,7 @@ workflow {
     lsu_5s_output_ch = channel.empty()
     whole_genome_alignments_output_ch = channel.empty()
     whole_genome_alignment_stats_ch = channel.empty()
+    barrnap_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
