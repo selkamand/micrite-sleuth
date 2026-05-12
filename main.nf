@@ -223,6 +223,7 @@ workflow {
     whole_genome_alignment_stats_ch = channel.empty()
     barrnap_ch = channel.empty()
     busco_ch = channel.empty()
+    dgenies_ch = channel.empty()
 
     // Subsample a small number of reads classified at/under taxid  
     // (these will later be used for blastn)
@@ -290,7 +291,7 @@ workflow {
 
 
         // Run Dgenies on de novo assembly whole-genome alignments
-        ch_dgenies = WGA_DOTPLOTS(whole_genome_alignments_ch.fordotplots)
+        dgenies_ch = WGA_DOTPLOTS(whole_genome_alignments_ch.fordotplots)
 
         // Barrnap 16/23S rRNA extraction from de novo assembly
         barrnap_ch = BARRNAP(assembly_ch.contigs)
@@ -372,7 +373,7 @@ workflow {
     sina_classified_23s = sina_classified_23s_output_ch
     quast = quast_ch
     busco = busco_ch
-    dgenies = ch_dgenies
+    dgenies = dgenies_ch
 }
 
 output {
