@@ -302,7 +302,7 @@ workflow {
         // Set output chanels
         ssu_16s_output_ch = rrna_sequences_ch.SSU_16S
         lsu_23s_output_ch = rrna_sequences_ch.LSU_23S
-        lsu_5s_output_ch = rrna_sequences_ch.lsu_5S
+        lsu_5s_output_ch = rrna_sequences_ch.LSU_5S
 
         // Classify 16S sequence against SINA database
         sina_classified_16s_ch = SINA_SEARCH_AND_CLASSIFY_SSU(rrna_sequences_ch.SSU_16S, arb_16s, arb_16s_sidx, "16S")
