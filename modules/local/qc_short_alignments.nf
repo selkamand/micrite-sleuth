@@ -39,5 +39,12 @@ process QC_SHORT_ALIGNMENTS {
 # \${outdir}/${meta.prefix}.mosdepth.summary.txt
 # \${outdir}/${meta.prefix}.mosdepth.global.dist.txt
 # \${outdir}/${meta.prefix}.mosdepth.regions.bed.gz
+
+    # Samtools stats
+    samtools stats -@ ${task.cpus} ${bam} > \${outdir}/${meta.prefix}.samtools.stats.txt
+    samtools idxstats -@ ${task.cpus} ${bam} > \${outdir}/${meta.prefix}.samtools.idxstats.txt
+    samtools flagstat -@ ${task.cpus} ${bam} > \${outdir}/${meta.prefix}.samtools.flagstat.txt
+
+# TODO: add riker once its more stable
     """
 }
